@@ -1,0 +1,154 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #12121b;
+  color: #fff;
+  margin: 0;
+  padding: 2rem;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+#userInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: #1e1e2f;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+#userInfo button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  background-color: #ff6f61;
+  color: #fff;
+  cursor: pointer;
+}
+
+#usersList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 2rem;
+}
+
+.user-card {
+  background-color: #1e1e2f;
+  padding: 1rem;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-card span {
+  font-weight: bold;
+  color: #ff6f61;
+}
+
+.user-card button {
+  margin-left: 5px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.user-card .edit-btn {
+  background-color: #4caf50;
+  color: #fff;
+}
+
+.user-card .edit-btn:hover {
+  background-color: #45a049;
+}
+
+.user-card .delete-btn {
+  background-color: #f44336;
+  color: #fff;
+}
+
+.user-card .delete-btn:hover {
+  background-color: #d32f2f;
+}
+
+button#addUserBtn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background-color: #2196f3;
+  color: #fff;
+  cursor: pointer;
+}
+
+button#addUserBtn:hover {
+  background-color: #1976d2;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 10;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: #1e1e2f;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  position: relative;
+}
+
+.modal-content h2 {
+  margin-top: 0;
+}
+
+.modal-content .close {
+  position: absolute;
+  top: 10px; right: 10px;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 6px;
+  border: none;
+  outline: none;
+  background-color: #2c2c3c;
+  color: #fff;
+}
+
+.modal-content input:focus {
+  background-color: #3a3a50;
+}
+
+.modal-content button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background-color: #ff6f61;
+  color: #fff;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.modal-content button:hover {
+  background-color: #ff5545;
+}

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administrar Usuarios</title>
+  <link rel="stylesheet" href="users.css">
+</head>
+<body>
+
+  <h1>Panel de Usuarios</h1>
+
+  <!-- Usuario conectado -->
+  <div id="userInfo">
+    Conectado como: <span id="userEmail">--</span>
+    <button id="logoutBtn">Cerrar sesión</button>
+  </div>
+
+  <!-- Lista de usuarios -->
+  <div id="usersList"></div>
+
+  <!-- Modal para agregar/editar usuario -->
+  <div id="userModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2 id="modalTitle">Agregar Usuario</h2>
+      <form id="userForm">
+        <input type="text" id="userName" placeholder="Nombre" required>
+        <input type="email" id="userEmailInput" placeholder="Email" required>
+        <input type="password" id="userPasswordInput" placeholder="Contraseña" required>
+        <button type="submit" id="saveUserBtn">Guardar</button>
+      </form>
+    </div>
+  </div>
+
+  <button id="addUserBtn">+ Agregar Usuario</button>
+
+  <script type="module" src="users.js"></script>
+</body>
+</html>

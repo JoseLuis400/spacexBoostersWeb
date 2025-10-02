@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpaceX Boosters - Propulsores y Vuelos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Agregando Font Awesome para iconos de redes sociales -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="shortcut icon" href="icon.png" type="image/x-icon">
+    
+    <!-- Agregando meta tags para Open Graph y redes sociales -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://spacexboosters.netlify.app/">
+    <meta property="og:title" content="SpaceX Boosters - Propulsores y Vuelos">
+    <meta property="og:description" content="Seguimiento en vivo de los propulsores de SpaceX: activos, retirados, destruidos y en pruebas, con estadísticas y vuelos totales.">
+    <meta property="og:image" content="https://spacexboosters.netlify.app/img/B1090.jpg">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://spacexboosters.netlify.app/">
+    <meta name="twitter:title" content="SpaceX Boosters - Propulsores y Vuelos">
+    <meta name="twitter:description" content="Seguimiento en vivo de los propulsores de SpaceX y sus vuelos.">
+    <meta name="twitter:image" content="https://spacexboosters.netlify.app/img/B1090.jpg">
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Agregando pantalla de carga -->
+    <div id="loader">
+        <img src="img/loading.webp" alt="Cargando..." />
+    </div>
+
+    <header class="header">
+        <div class="container">
+            <h1 class="header-title">SpaceX Boosters</h1>
+            <p class="header-subtitle">Seguimiento de Propulsores y Vuelos</p>
+            
+            <!-- Agregando fecha de última actualización -->
+            <div id="update-info">
+                Última actualización: <span id="last-update">Cargando...</span>
+            </div>
+
+            <!-- Agregando redes sociales en el header -->
+            <div class="social-links">
+                <a href="https://x.com/LanzamientosE" target="_blank" aria-label="X" class="social-icon x">
+                    <i class="fa-brands fa-x-twitter"></i>
+                </a>
+                <a href="https://www.youtube.com/@LanzamientosE" target="_blank" aria-label="YouTube" class="social-icon youtube">
+                    <i class="fa-brands fa-youtube"></i>
+                </a>
+                <a href="https://www.instagram.com/LanzamientosE" target="_blank" aria-label="Instagram" class="social-icon instagram">
+                    <i class="fa-brands fa-instagram"></i>
+                </a>
+                <a href="https://www.tiktok.com/@LanzamientosE" target="_blank" aria-label="TikTok" class="social-icon tiktok">
+                    <i class="fa-brands fa-tiktok"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <!-- Reorganizando estadísticas en dos filas -->
+            <div class="stats">
+                <div class="stat-card" id="total-boosters-card">
+                    <h3 class="stat-number" id="total-boosters">0</h3>
+                    <p class="stat-label">Total Propulsores</p>
+                </div>
+                <div class="stat-card" id="active-boosters-card">
+                    <h3 class="stat-number" id="active-boosters">0</h3>
+                    <p class="stat-label">Activos</p>
+                </div>
+                <div class="stat-card" id="no-active-card">
+                    <h3 class="stat-number" id="no-active">0</h3>
+                    <p class="stat-label">No activos</p>
+                </div>
+            </div>
+            
+            <!-- Segunda fila de estadísticas con más detalles -->
+            <div class="stats-bottom">
+                <div class="stat-card" id="retired-boosters-card">
+                    <h3 class="stat-number" id="retired-boosters">0</h3>
+                    <p class="stat-label">Retirados</p>
+                </div>
+                <div class="stat-card" id="destroyed-boosters-card">
+                    <h3 class="stat-number" id="destroyed-boosters">0</h3>
+                    <p class="stat-label">Destruidos</p>
+                </div>
+                <div class="stat-card" id="discarded-boosters-card">
+                    <h3 class="stat-number" id="discarded-boosters">0</h3>
+                    <p class="stat-label">Desechados</p>
+                </div>
+                <div class="stat-card" id="testing-boosters-card">
+                    <h3 class="stat-number" id="testing-boosters">0</h3>
+                    <p class="stat-label">En desarrollo</p>
+                </div>
+                <!-- Agregando tarjeta de total de vuelos -->
+                <div class="stat-card" id="total-flights-card">
+                    <h3 class="stat-number" id="total-flights">0</h3>
+                    <p class="stat-label">Vuelos Totales</p>
+                </div>
+            </div>
+
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">Todos</button>
+                <button class="filter-btn" data-filter="active">Activos</button>
+                <button class="filter-btn" data-filter="retired">Retirados</button>
+                <button class="filter-btn" data-filter="destroyed">Destruidos</button>
+                <button class="filter-btn" data-filter="testing">En Pruebas</button>
+                
+                <!-- Agregando buscador -->
+                <input type="text" id="search-input" placeholder="Buscar propulsor..." class="search-box">
+            </div>
+
+            <div class="boosters-grid" id="boosters-grid">
+                <!-- Los propulsores se cargarán aquí dinámicamente -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal para detalles del propulsor -->
+    <div class="modal" id="booster-modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <div class="modal-body" id="modal-body">
+                <!-- Contenido del modal se carga dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Agregando footer con redes sociales y enlaces -->
+    <footer class="footer">
+        <div class="container footer-container">
+            <div class="footer-left">
+                <p>© 2025 SpaceX Boosters. Todos los derechos reservados.</p>
+            </div>
+            <div class="footer-center">
+                <a href="https://x.com/LanzamientosE" target="_blank" aria-label="X (Twitter)" class="footer-social x">
+                    <i class="fa-brands fa-x-twitter"></i>
+                </a>
+                <a href="https://www.youtube.com/@lanzamientosE" target="_blank" aria-label="YouTube" class="footer-social youtube">
+                    <i class="fa-brands fa-youtube"></i>
+                </a>
+                <a href="https://www.instagram.com/LanzamientosE" target="_blank" aria-label="Instagram" class="footer-social instagram">
+                    <i class="fa-brands fa-instagram"></i>
+                </a>
+                <a href="https://www.tiktok.com/@LanzamientosE" target="_blank" aria-label="TikTok" class="footer-social tiktok">
+                    <i class="fa-brands fa-tiktok"></i>
+                </a>
+            </div>
+            <div class="footer-right">
+                <a href="#boosters-grid">Propulsores</a>
+                <a href="#update-info">Última actualización</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Agregando Firebase SDK -->
+    <script type="module" src="script.js"></script>
+</body>
+</html>

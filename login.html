@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - SpaceX Boosters</title>
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body>
+
+  <div id="loginContainer">
+    <h1>Iniciar Sesión</h1>
+
+    <div id="loginSection">
+      <input type="email" id="loginEmail" placeholder="Email" required>
+      <input type="password" id="loginPassword" placeholder="Contraseña" required>
+      <button id="loginBtn">Iniciar sesión</button>
+    </div>
+
+    <!-- Para mostrar el usuario logueado si quieres -->
+    <div id="userInfo">
+      Conectado como: <span id="userEmail">--</span>
+      <button id="logoutBtn">Cerrar sesión</button>
+    </div>
+
+  </div>
+
+  <script type="module" src="login.js"></script>
+</body>
+</html>

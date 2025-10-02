@@ -1,0 +1,770 @@
+/* Reset y variables CSS */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --card: #1e293b;
+  --card-foreground: #f1f5f9;
+  --primary: #0f172a;
+  --primary-foreground: #ffffff;
+  --secondary: #3b82f6;
+  --secondary-foreground: #ffffff;
+  --accent: #3b82f6;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --border: #334155;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --radius: 0.5rem;
+
+  --font-heading: "Playfair Display", serif;
+  --font-body: "Source Sans Pro", sans-serif;
+
+  /* Agregando variables para colores de redes sociales */
+  --social-icon-color-X: #fff;
+  --social-icon-color-youtube: #ff0000;
+  --social-icon-color-instagram: radial-gradient(
+    circle at 30% 107%,
+    #fdf497 0%,
+    #fdf497 5%,
+    #fd5949 45%,
+    #d6249f 60%,
+    #285aeb 90%
+  );
+  --social-icon-color-tiktok: #fff;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--background);
+  color: var(--foreground);
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Header */
+.header {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: var(--primary-foreground);
+  padding: 3rem 0;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.header-title {
+  font-family: var(--font-heading);
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.header-subtitle {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+/* Agregando estilos para redes sociales en header */
+.social-links {
+  margin-top: 15px;
+}
+
+.social-links a {
+  margin: 0 10px;
+  font-size: 2rem;
+  color: white;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.social-links a.x:hover {
+  color: #000000;
+}
+
+.social-links a.youtube:hover {
+  color: var(--social-icon-color-youtube);
+}
+
+/* Main content */
+.main {
+  padding: 2rem 0;
+}
+
+/* Filters */
+.filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.filter-btn {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.filter-btn.active {
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border-color: var(--accent);
+}
+
+/* Agregando estilos para el buscador */
+.search-box {
+  padding: 8px 12px;
+  margin-left: 10px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  border-radius: 6px;
+  font-size: 14px;
+  flex: 1;
+}
+
+/* Stats */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.stat-card {
+  background: #111827;
+  padding: 1.5rem 1rem;
+  border-radius: 12px;
+  text-align: center;
+  border: 2px solid #1f2937;
+  transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+  cursor: default;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  border-color: #00c9ff;
+  box-shadow: 0 4px 12px rgba(0, 201, 255, 0.3);
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #00c9ff;
+}
+
+.stat-label {
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  margin-top: 0.3rem;
+  display: block;
+}
+
+/* Segunda fila de estadísticas */
+.stats-bottom {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin: 1rem 0 3rem 0;
+}
+
+/* Colores de bordes por tipo de estadística */
+#total-boosters-card {
+  border-color: #1e40af;
+}
+
+#active-boosters-card {
+  border-color: #16a34a;
+}
+
+#no-active-card,
+#retired-boosters-card,
+#destroyed-boosters-card {
+  border-color: #f59e0b;
+}
+
+#discarded-boosters-card {
+  border-color: #92400e;
+}
+
+#testing-boosters-card {
+  border-color: #7c3aed;
+}
+
+/* Boosters grid */
+.boosters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.booster-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  animation: fadeIn 0.5s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+.booster-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border-color: var(--accent);
+}
+
+.booster-image {
+  width: 100%;
+  height: 200px;
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius) var(--radius) 0 0;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.booster-image img {
+  width: 100%;
+  height: 100%;
+  /* Cambiando de object-fit: contain a cover para que ocupe todo el ancho y se recorte */
+  object-fit: cover;
+  object-position: center;
+}
+
+.booster-content {
+  padding: 1.5rem;
+  flex: 1;
+}
+
+.booster-name {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.booster-status {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.status-active, .status-activo {
+  background: #166534;
+  color: #dcfce7;
+}
+
+.status-retirado {
+  background: #92400e;
+  color: #fef3c7;
+}
+
+.status-destroyed {
+  background: #991b1b;
+  color: #fee2e2;
+}
+
+.status-Desechado, .status-desechado {
+  background: #991b1b;
+  color: #fee2e2;
+}
+
+.status-en-pruebas,
+.status-desarrollo, .status-testing {
+  background: #1e40af;
+  color: #dbeafe;
+}
+
+/* Agregando estilos para tipos de propulsores */
+.booster-type {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  margin-left: 0.5rem;
+}
+
+.type-FHc,
+.type-FH,
+.type-FHs {
+  background: #1e3a8a;
+  color: #c7d2fe;
+}
+
+.type-F9 {
+  background: #92400e;
+  color: #c7d2fe;
+}
+
+.type-null {
+  display: none;
+}
+
+.booster-flights {
+  color: var(--muted-foreground);
+  margin-bottom: 0.5rem;
+}
+
+.booster-first-flight {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  background-color: var(--background);
+  margin: 5% auto;
+  padding: 0;
+  border-radius: var(--radius);
+  width: 90%;
+  max-width: 800px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  font-size: 2rem;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 1001;
+  color: var(--muted-foreground);
+}
+
+.modal-close:hover {
+  color: #991b1b;
+}
+
+.modal-body {
+  padding: 2rem;
+}
+
+/* Agregando clase para prevenir scroll cuando modal está abierto */
+.modal-open {
+  overflow: hidden;
+}
+
+.modal-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.modal-title {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.modal-image {
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  object-fit: contain;
+  border-radius: var(--radius);
+  margin: 0 auto 1rem;
+  display: block;
+  background: linear-gradient(45deg, #334155, #475569);
+  min-height: 150px;
+  max-height: 400px;
+}
+
+.flight-history {
+  margin-top: 2rem;
+}
+
+.flight-history h3 {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--accent);
+}
+
+.flight-item {
+  background: var(--muted);
+  padding: 1rem;
+  border-radius: var(--radius);
+  margin-bottom: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flight-mission {
+  font-weight: 600;
+}
+
+.flight-date {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+
+/* Nuevos estilos para la lista detallada de vuelos */
+.flight-details-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  background: var(--card);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.flight-details-table th,
+.flight-details-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.flight-details-table th {
+  background: var(--muted);
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.flight-details-table tr:hover {
+  background: var(--muted);
+}
+
+.landing-platform {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.landing-asog {
+  background: #1e40af;
+  color: #dbeafe;
+}
+.landing-jrti {
+  background: #059669;
+  color: #d1fae5;
+}
+.landing-ocisly {
+  background: #7c3aed;
+  color: #e9d5ff;
+}
+.landing-lz {
+  background: #f59e0b;
+  color: #fff7ed;
+}
+
+/* Agregando estilo para propulsores desechados */
+.landing-expendable {
+  background: #6b7280;
+  color: #f3f4f6;
+}
+
+.launch-platform {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+
+/* Agregando estilos para vuelos programados */
+.scheduled-indicator {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  text-align: center;
+  animation: pulse 2s infinite;
+}
+
+.scheduled-flight {
+  background: rgba(245, 158, 11, 0.1) !important;
+  border-left: 4px solid #f59e0b;
+}
+
+.scheduled-badge {
+  background: #f59e0b;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-title {
+    font-size: 2rem;
+  }
+
+  .filters {
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+
+  .filter-btn {
+    white-space: nowrap;
+  }
+
+  .boosters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-content {
+    width: 95%;
+    margin: 2% auto;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-bottom {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stat-card {
+    padding: 1rem;
+  }
+
+  .stat-number {
+    font-size: 1.6rem;
+  }
+
+  .stat-label {
+    font-size: 0.85rem;
+  }
+
+  .footer-container {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .footer-right {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    padding: 0.8rem;
+  }
+
+  .stat-number {
+    font-size: 1.4rem;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+  }
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estados de carga */
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: var(--muted-foreground);
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Agregando estilos para fecha de actualización */
+#update-info {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: var(--muted-foreground);
+}
+
+#last-update {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* Agregando estilos para plataformas de lanzamiento */
+.launchpad-ksc {
+  background: #0ea5e9;
+  color: #f0f9ff;
+}
+
+.launchpad-cape {
+  background: #f97316;
+  color: #fff7ed;
+}
+
+.launchpad-vnb {
+  background: #d946ef;
+  color: #f5e0ff;
+}
+
+/* Agregando estilos para el footer */
+.footer {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+  padding: 2rem 1rem;
+  font-size: 0.9rem;
+  border-top: 1px solid var(--border);
+}
+
+.footer-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 1rem;
+}
+
+.footer-left,
+.footer-center,
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.footer-center a,
+.footer-right a {
+  text-decoration: none;
+  transition: transform 0.3s, color 0.3s;
+}
+
+.footer-center a:hover,
+.footer-right a:hover {
+  transform: translateY(-2px);
+}
+
+.footer-social.x i {
+  color: #fff;
+  font-size: 1.3rem;
+}
+
+.footer-social.youtube i {
+  color: #ff0000;
+  font-size: 1.3rem;
+}
+
+.footer-social.instagram i {
+  font-size: 1.3rem;
+  background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.footer-social.tiktok i {
+  font-size: 1.3rem;
+  background: #fff;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.footer-right a {
+  color: var(--muted-foreground);
+}
+
+.footer-right a:hover {
+  color: var(--accent);
+}
+
+/* Agregando estilos para el loader de pantalla completa */
+#loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+#loader img {
+  max-width: 200px;
+  max-height: 200px;
+}
+
+#loader.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
