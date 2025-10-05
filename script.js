@@ -70,7 +70,7 @@ function sortMissionsByDate(missions) {
 
 async function loadConfig() {
   const configDoc = await getDoc(doc(db, "data", "config"));
-  if(configDoc.exists()) {
+  if (configDoc.exists()) {
     const data = configDoc.data();
     document.getElementById("last-update").textContent = `${data.updateDate} • ${data.updateTime} UTC`;
   } else {
@@ -214,7 +214,7 @@ function updateStats() {
   const noActiveBoosters = totalBoosters - activeBoosters
   const retired = boostersData.filter((b) => b.status === "retired").length
   const destroyed = boostersData.filter((b) => b.status === "destroyed").length
-  const discarded = boostersData.filter((b) => b.status === "discarded"|| b.status === "Desechado").length
+  const discarded = boostersData.filter((b) => b.status === "discarded" || b.status === "Desechado").length
   const testing = boostersData.filter((b) => b.status === "testing" || b.status === "En desarrollo").length
   let totalFlights = 0
 
@@ -278,7 +278,7 @@ function createBoosterCard(booster) {
   const statusClass = `status-${booster.status.toLowerCase().replace(" ", "-")}`
   const statusText = traducirEstado(booster.status)
 
-  const typeClass = `type-${booster.type}`
+  const typeClass = `type-${booster.type}`;
   const typeText = booster.type === "F9" ? "Falcon 9" : booster.type?.includes("FH") ? "Falcon Heavy" : "N/A"
 
   const lastFlightText = booster.lastFlight
@@ -299,8 +299,8 @@ function createBoosterCard(booster) {
         </div>
         <div class="booster-content">
             <h3 class="booster-name">${booster.name}</h3>
-            <span class="booster-status ${statusClass}">${statusText}</span>
             <span class="booster-type ${typeClass}">${typeText}</span>
+            <span class="booster-status ${statusClass}">${statusText}</span>
             ${scheduledIndicator}
             <p class="booster-flights">Vuelos realizados: ${booster.flights}</p>
             <p class="booster-first-flight">${lastFlightText}</p>
@@ -378,8 +378,8 @@ function openModal(booster) {
                     </thead>
                     <tbody>
                         ${booster.missions
-                          .map(
-                            (mission, index) => `
+        .map(
+          (mission, index) => `
                             <tr ${mission.programado ? 'class="scheduled-flight"' : ""} id="${getMissionRowId(mission)}">
                                 <td><strong>${index + 1}</strong></td>
                                 <td>
@@ -399,8 +399,8 @@ function openModal(booster) {
                                 </td>
                             </tr>
                         `,
-                          )
-                          .join("")}
+        )
+        .join("")}
                     </tbody>
                 </table>
             </div>
@@ -421,10 +421,9 @@ function openModal(booster) {
             <img src="${booster.image}" alt="${booster.name}" class="modal-image"
                  onerror="this.style.display='none';">
             <h2 class="modal-title">${booster.name}</h2>
-            <span class="booster-status ${statusClass}">${statusText}</span>
             <span class="booster-type ${typeClass}">${typeText}</span>
+            <span class="booster-status ${statusClass}">${statusText}</span>
         </div>
-        
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
             <div style="text-align: center; padding: 1rem; background: var(--muted); border-radius: var(--radius);">
                 <div style="font-size: 2rem; font-weight: bold; color: var(--accent);">${booster.flights}</div>
@@ -443,7 +442,6 @@ function openModal(booster) {
                 <div style="color: var(--muted-foreground);">Último Vuelo</div>
             </div>
         </div>
-
         ${flightHistoryHTML}
     `
 
