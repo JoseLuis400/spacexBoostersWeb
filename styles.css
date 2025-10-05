@@ -28,15 +28,33 @@
   /* Agregando variables para colores de redes sociales */
   --social-icon-color-X: #fff;
   --social-icon-color-youtube: #ff0000;
-  --social-icon-color-instagram: radial-gradient(
-    circle at 30% 107%,
-    #fdf497 0%,
-    #fdf497 5%,
-    #fd5949 45%,
-    #d6249f 60%,
-    #285aeb 90%
-  );
+  --social-icon-color-instagram: radial-gradient(circle at 30% 107%,
+      #fdf497 0%,
+      #fdf497 5%,
+      #fd5949 45%,
+      #d6249f 60%,
+      #285aeb 90%);
   --social-icon-color-tiktok: #fff;
+
+  /* VARIABLES AGREGADAS POR IRON7III */
+  --border-radius-small: 4px;
+  --border-radius-medium: 8px;
+  --border-radius-large: 16px;
+  --border-radius-xl: 24px;
+  --border-radius-2xl: 32px;
+  --border-radius-3xl: 40px;
+
+  /* Agregando variables para colores de estados de propulsores */
+  --booster-state-active: #16a34a;
+  --booster-state-inactive: #f59e0b;
+  --booster-state-retired: #92400e;
+  --booster-state-testing: #7c3aed;
+  --booster-state-destroyed: #ef4444;
+  --booster-state-discarded: #6b7280;
+
+  /* Agregando variables para colores de tipos de propulsores */
+  --booster-type-FH: #524fee;
+  --booster-type-F9: #3b82f6;
 }
 
 body {
@@ -113,7 +131,7 @@ body {
   border: 2px solid var(--border);
   background: var(--background);
   color: var(--foreground);
-  border-radius: var(--radius);
+  border-radius: var(--border-radius-medium);
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s ease;
@@ -137,7 +155,7 @@ body {
   border: 1px solid var(--border);
   background: var(--background);
   color: var(--foreground);
-  border-radius: 6px;
+  border-radius: var(--border-radius-medium);
   font-size: 14px;
   flex: 1;
 }
@@ -153,28 +171,24 @@ body {
 .stat-card {
   background: #111827;
   padding: 1.5rem 1rem;
-  border-radius: 12px;
+  border-radius: var(--border-radius-large);
   text-align: center;
   border: 2px solid #1f2937;
   transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
   cursor: default;
 }
 
-.stat-card:hover {
-  transform: translateY(-4px);
-  border-color: #00c9ff;
-  box-shadow: 0 4px 12px rgba(0, 201, 255, 0.3);
-}
-
 .stat-number {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #00c9ff;
+  font-size: 2.4rem;
+  font-weight: bold;
+  color: inherit;
 }
 
 .stat-label {
-  font-size: 0.95rem;
-  color: #cbd5e1;
+  font-size: 1rem;
+  font-weight: bold;
+  color: inherit;
+  text-transform: uppercase;
   margin-top: 0.3rem;
   display: block;
 }
@@ -182,7 +196,7 @@ body {
 /* Segunda fila de estadísticas */
 .stats-bottom {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 1rem;
   margin: 1rem 0 3rem 0;
 }
@@ -190,24 +204,56 @@ body {
 /* Colores de bordes por tipo de estadística */
 #total-boosters-card {
   border-color: #1e40af;
+  background: #1e40af22;
+  color: #1e40af;
 }
 
-#active-boosters-card {
-  border-color: #16a34a;
+#active-boosters-card,
+.status-active,
+.status-activo {
+  border-color: var(--booster-state-active);
+  background: color-mix(in srgb, var(--booster-state-active) 10%, transparent);
+  color: var(--booster-state-active);
 }
 
 #no-active-card,
 #retired-boosters-card,
-#destroyed-boosters-card {
+.status-retirado,
+.status-retired {
   border-color: #f59e0b;
+  background: #f59e0b22;
+  color: #f59e0b;
 }
 
-#discarded-boosters-card {
-  border-color: #92400e;
+#destroyed-boosters-card,
+.status-destroyed,
+.status-destruido {
+  border-color: var(--booster-state-destroyed);
+  background: color-mix(in srgb, var(--booster-state-destroyed) 10%, transparent);
+  color: var(--booster-state-destroyed);
 }
 
-#testing-boosters-card {
-  border-color: #7c3aed;
+#discarded-boosters-card,
+.status-Desechado,
+.status-desechado {
+  border-color: var(--booster-state-discarded);
+  background: color-mix(in srgb, var(--booster-state-discarded) 10%, transparent);
+  color: var(--booster-state-discarded);
+}
+
+#total-flights-card {
+  border-color: #eef;
+  background: #eeeeff22;
+  color: #eef;
+}
+
+#testing-boosters-card,
+.status-en-pruebas,
+.status-desarrollo,
+.status-testing {
+  border-color: var(--booster-state-testing);
+  background: color-mix(in srgb, var(--booster-state-testing) 10%, transparent);
+  color: var(--booster-state-testing);
 }
 
 /* Boosters grid */
@@ -219,7 +265,7 @@ body {
 
 .booster-card {
   background: var(--card);
-  border-radius: var(--radius);
+  border-radius: 16px;
   overflow: hidden;
   border: 1px solid var(--border);
   transition: all 0.3s ease;
@@ -242,7 +288,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius) var(--radius) 0 0;
+  border-radius: 16px 16px 0 0;
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -267,62 +313,47 @@ body {
   margin-bottom: 0.5rem;
 }
 
-.booster-status {
+.booster-status,
+.booster-type {
   display: inline-block;
   padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
+  height: 32px;
+  border-radius: var(--border-radius-large);
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 1rem;
-}
-
-.status-active, .status-activo {
-  background: #166534;
-  color: #dcfce7;
-}
-
-.status-retirado {
-  background: #92400e;
-  color: #fef3c7;
-}
-
-.status-destroyed {
-  background: #991b1b;
-  color: #fee2e2;
-}
-
-.status-Desechado, .status-desechado {
-  background: #991b1b;
-  color: #fee2e2;
-}
-
-.status-en-pruebas,
-.status-desarrollo, .status-testing {
-  background: #1e40af;
-  color: #dbeafe;
+  border-width: 1px;
+  border-style: solid;
+  text-transform: capitalize;
 }
 
 /* Agregando estilos para tipos de propulsores */
 .booster-type {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  margin-left: 0.5rem;
+  margin-right: 8px;
+  font-weight: 700;
+  border-radius: var(--border-radius-medium);
+  border-width: 1px;
+  border-style: solid;
 }
 
 .type-FHc,
 .type-FH,
 .type-FHs {
-  background: #1e3a8a;
-  color: #c7d2fe;
+  background: color-mix(in srgb, var(--booster-type-FH) 10%, transparent);
+  color: var(--booster-type-FH);
+  border-color: var(--booster-type-FH);
+}
+
+.type-unknown {
+  background: color-mix(in srgb, #fff 10%, transparent);
+  color: #fff;
+  border-color: #fff;
 }
 
 .type-F9 {
-  background: #92400e;
-  color: #c7d2fe;
+  background: color-mix(in srgb, var(--booster-type-F9) 10%, transparent);
+  color: var(--booster-type-F9);
+  border-color: var(--booster-type-F9);
 }
 
 .type-null {
@@ -360,6 +391,7 @@ body {
   max-width: 800px;
   max-height: 80vh;
   overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
 }
 
@@ -420,7 +452,7 @@ body {
   font-family: var(--font-heading);
   font-size: 1.5rem;
   margin-bottom: 1rem;
-  color: var(--accent);
+  color: inherit;
 }
 
 .flight-item {
@@ -480,14 +512,17 @@ body {
   background: #1e40af;
   color: #dbeafe;
 }
+
 .landing-jrti {
   background: #059669;
   color: #d1fae5;
 }
+
 .landing-ocisly {
   background: #7c3aed;
   color: #e9d5ff;
 }
+
 .landing-lz {
   background: #f59e0b;
   color: #fff7ed;
@@ -513,8 +548,8 @@ body {
   background: linear-gradient(135deg, #f59e0b, #d97706);
   color: white;
   padding: 0.5rem;
-  border-radius: var(--radius);
-  font-size: 0.875rem;
+  border-radius: 8px;
+  font-size: 1rem;
   font-weight: 600;
   margin-bottom: 1rem;
   text-align: center;
@@ -538,10 +573,12 @@ body {
 }
 
 @keyframes pulse {
+
   0%,
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.7;
   }
@@ -629,6 +666,7 @@ body {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -726,6 +764,7 @@ body {
   font-size: 1.3rem;
   background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -733,6 +772,7 @@ body {
   font-size: 1.3rem;
   background: #fff;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
