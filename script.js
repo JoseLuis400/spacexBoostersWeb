@@ -2,13 +2,13 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAU8I3PbYOrd-qCSGNX3nyF6WWg0oIhAS8",
-  authDomain: "spacexboosters.firebaseapp.com",
-  projectId: "spacexboosters",
-  storageBucket: "spacexboosters.firebasestorage.app",
-  messagingSenderId: "347004633729",
-  appId: "1:347004633729:web:2953672e258f6a67814380",
-  measurementId: "G-P27248GMWL",
+	apiKey: "AIzaSyAU8I3PbYOrd-qCSGNX3nyF6WWg0oIhAS8",
+	authDomain: "spacexboosters.firebaseapp.com",
+	projectId: "spacexboosters",
+	storageBucket: "spacexboosters.firebasestorage.app",
+	messagingSenderId: "347004633729",
+	appId: "1:347004633729:web:2953672e258f6a67814380",
+	measurementId: "G-P27248GMWL",
 }
 
 const app = initializeApp(firebaseConfig)
@@ -33,267 +33,273 @@ const lastUpdateEl = document.getElementById("last-update")
 const totalFlightsEl = document.getElementById("total-flights")
 
 function isFlexibleDate(dateString) {
-  return dateString.includes("NET") || dateString.length < 10
+	return dateString.includes("NET") || dateString.length < 10
 }
 
 function formatDate(dateString) {
-  // Si es una fecha flexible (NET, solo año, etc.), mostrarla tal como está
-  if (isFlexibleDate(dateString)) {
-    return dateString
-  }
+	// Si es una fecha flexible (NET, solo año, etc.), mostrarla tal como está
+	if (isFlexibleDate(dateString)) {
+		return dateString
+	}
 
-  // Crear fecha sin conversión de zona horaria para fechas normales
-  const [year, month, day] = dateString.split("-")
-  const date = new Date(year, month - 1, day)
-  return date.toLocaleDateString("es-ES", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  })
+	// Crear fecha sin conversión de zona horaria para fechas normales
+	const [year, month, day] = dateString.split("-")
+	const date = new Date(year, month - 1, day)
+	return date.toLocaleDateString("es-ES", {
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+	})
 }
 
 function sortMissionsByDate(missions) {
-  return missions.sort((a, b) => {
-    // Si ambas son fechas flexibles, ordenar alfabéticamente
-    if (isFlexibleDate(a.date) && isFlexibleDate(b.date)) {
-      return a.date.localeCompare(b.date)
-    }
+	return missions.sort((a, b) => {
+		// Si ambas son fechas flexibles, ordenar alfabéticamente
+		if (isFlexibleDate(a.date) && isFlexibleDate(b.date)) {
+			return a.date.localeCompare(b.date)
+		}
 
-    // Si solo una es flexible, ponerla al final
-    if (isFlexibleDate(a.date)) return 1
-    if (isFlexibleDate(b.date)) return -1
+		// Si solo una es flexible, ponerla al final
+		if (isFlexibleDate(a.date)) return 1
+		if (isFlexibleDate(b.date)) return -1
 
-    // Si ambas son fechas normales, ordenar por fecha
-    return new Date(a.date) - new Date(b.date)
-  })
+		// Si ambas son fechas normales, ordenar por fecha
+		return new Date(a.date) - new Date(b.date)
+	})
 }
 
 async function loadConfig() {
-  const configDoc = await getDoc(doc(db, "data", "config"));
-  if (configDoc.exists()) {
-    const data = configDoc.data();
-    document.getElementById("last-update").textContent = `${data.updateDate} • ${data.updateTime} UTC`;
-  } else {
-    document.getElementById("last-update").textContent = "Desconocido";
-  }
+	const configDoc = await getDoc(doc(db, "data", "config"));
+	if (configDoc.exists()) {
+		const data = configDoc.data();
+		document.getElementById("last-update").textContent = `${data.updateDate} • ${data.updateTime} UTC`;
+	} else {
+		document.getElementById("last-update").textContent = "Desconocido";
+	}
 }
 
 async function loadBoostersData() {
-  try {
-    const boostersCollection = collection(db, "boosters")
-    const boostersSnapshot = await getDocs(boostersCollection)
+	try {
+		const boostersCollection = collection(db, "boosters")
+		const boostersSnapshot = await getDocs(boostersCollection)
 
-    boostersData = []
+		boostersData = []
 
-    boostersSnapshot.forEach((doc) => {
-      if (doc.id === "metadata") return
+		boostersSnapshot.forEach((doc) => {
+			if (doc.id === "metadata") return
 
-      const data = doc.data()
-      boostersData.push({
-        id: doc.id,
-        name: data.name,
-        status: data.status,
-        type: data.type,
-        image: data.image,
-        missions: data.missions || [],
-      })
-    })
+			const data = doc.data()
+			boostersData.push({
+				id: doc.id,
+				name: data.name,
+				block: data.block,
+				status: data.status,
+				type: data.type,
+				image: data.image,
+				missions: data.missions || [],
+			})
+		})
 
-    // Ordenar por número de booster
-    boostersData.sort((a, b) => {
-      const numA = Number.parseInt(a.name.replace("B", ""))
-      const numB = Number.parseInt(b.name.replace("B", ""))
-      return numB - numA
-    })
+		// Ordenar por número de booster
+		boostersData.sort((a, b) => {
+			const numA = Number.parseInt(a.name.replace("B", ""))
+			const numB = Number.parseInt(b.name.replace("B", ""))
+			return numB - numA
+		})
 
-    // Procesar misiones y calcular vuelos
-    boostersData = boostersData.map((booster) => {
-      if (booster.missions && booster.missions.length > 0) {
-        const sortedMissions = sortMissionsByDate(booster.missions)
-        const completedFlights = booster.missions.filter((mission) => !mission.programado).length
+		// Procesar misiones y calcular vuelos
+		boostersData = boostersData.map((booster) => {
+			if (booster.missions && booster.missions.length > 0) {
+				const sortedMissions = sortMissionsByDate(booster.missions)
+				const completedFlights = booster.missions.filter((mission) => !mission.programado).length
 
-        const completedMissions = sortedMissions.filter((mission) => !mission.programado)
+				const completedMissions = sortedMissions.filter((mission) => !mission.programado)
 
-        return {
-          ...booster,
-          flights: completedFlights,
-          firstFlight: completedMissions.length > 0 ? completedMissions[0].date : null,
-          lastFlight: completedMissions.length > 0 ? completedMissions[completedMissions.length - 1].date : null,
-        }
-      }
-      return {
-        ...booster,
-        flights: 0,
-      }
-    })
+				return {
+					...booster,
+					flights: completedFlights,
+					firstFlight: completedMissions.length > 0 ? completedMissions[0].date : null,
+					lastFlight: completedMissions.length > 0 ? completedMissions[completedMissions.length - 1].date : null,
+				}
+			}
+			return {
+				...booster,
+				flights: 0,
+			}
+		})
 
-    filteredBoosters = [...boostersData]
-    console.log("[v0] Datos cargados desde Firebase:", boostersData.length, "propulsores")
-  } catch (error) {
-    console.error("[v0] Error cargando datos desde Firebase:", error)
-    boostersGrid.innerHTML =
-      '<div class="loading" style="color: #ef4444;">Error cargando datos de Firebase. Verifica la configuración.</div>'
-  }
+		filteredBoosters = [...boostersData]
+		console.log("[v0] Datos cargados desde Firebase:", boostersData.length, "propulsores")
+	} catch (error) {
+		console.error("[v0] Error cargando datos desde Firebase:", error)
+		boostersGrid.innerHTML =
+			'<div class="loading" style="color: #ef4444;">Error cargando datos de Firebase. Verifica la configuración.</div>'
+	}
 }
 
 function hideLoader() {
-  const loader = document.getElementById("loader")
-  if (loader) {
-    loader.classList.add("fade-out")
-    setTimeout(() => loader.remove(), 600)
-  }
+	const loader = document.getElementById("loader")
+	if (loader) {
+		loader.classList.add("fade-out")
+		setTimeout(() => loader.remove(), 600)
+	}
 }
 
 function getQueryParam(param) {
-  const urlParams = new URLSearchParams(window.location.search)
-  return urlParams.get(param)
+	const urlParams = new URLSearchParams(window.location.search)
+	return urlParams.get(param)
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Mostrar loading mientras se cargan los datos
-  boostersGrid.innerHTML = '<div class="loading">Cargando propulsores desde Firebase...</div>'
+	// Mostrar loading mientras se cargan los datos
+	boostersGrid.innerHTML = '<div class="loading">Cargando propulsores desde Firebase...</div>'
 
-  await loadBoostersData()
+	await loadBoostersData()
 
-  if (boostersData.length > 0) {
-    updateStats()
-    renderBoosters()
-    setupEventListeners()
-    hideLoader()
+	if (boostersData.length > 0) {
+		updateStats()
+		renderBoosters()
+		setupEventListeners()
+		hideLoader()
 
-    const boosterParam = getQueryParam("booster")
-    if (boosterParam) {
-      const booster = boostersData.find((b) => b.name === boosterParam)
-      if (booster) openModal(booster)
-    }
-  }
+		const boosterParam = getQueryParam("booster")
+		if (boosterParam) {
+			const booster = boostersData.find((b) => b.name === boosterParam)
+			if (booster) openModal(booster)
+		}
+	}
 })
 
 // Configurar event listeners
 function setupEventListeners() {
-  // Filtros
-  filterButtons.forEach((button) => {
-    button.addEventListener("click", function () {
-      const filter = this.dataset.filter
-      setActiveFilter(filter)
-      filterBoosters(filter)
-    })
-  })
+	// Filtros
+	filterButtons.forEach((button) => {
+		button.addEventListener("click", function () {
+			const filter = this.dataset.filter
+			setActiveFilter(filter)
+			filterBoosters(filter)
+		})
+	})
 
-  const searchInput = document.getElementById("search-input")
-  searchInput.addEventListener("input", () => {
-    const query = searchInput.value.toLowerCase()
-    const boosters = document.querySelectorAll(".booster-card")
+	const searchInput = document.getElementById("search-input")
+	searchInput.addEventListener("input", () => {
+		const query = searchInput.value.toLowerCase()
+		const boosters = document.querySelectorAll(".booster-card")
 
-    boosters.forEach((booster) => {
-      const name = booster.querySelector(".booster-name").textContent.toLowerCase()
-      booster.style.display = name.includes(query) ? "block" : "none"
-    })
-  })
+		boosters.forEach((booster) => {
+			const name = booster.querySelector(".booster-name").textContent.toLowerCase()
+			booster.style.display = name.includes(query) ? "block" : "none"
+		})
+	})
 
-  // Modal
-  modalClose.addEventListener("click", closeModal)
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) {
-      closeModal()
-    }
-  })
+	// Modal
+	modalClose.addEventListener("click", closeModal)
+	modal.addEventListener("click", (e) => {
+		if (e.target === modal) {
+			closeModal()
+		}
+	})
 
-  // Escape key para cerrar modal
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      closeModal()
-    }
-  })
+	// Escape key para cerrar modal
+	document.addEventListener("keydown", (e) => {
+		if (e.key === "Escape") {
+			closeModal()
+		}
+	})
 }
 
 // Actualizar estadísticas
 function updateStats() {
-  const totalBoosters = boostersData.length
-  const activeBoosters = boostersData.filter((b) => b.status === "active").length
-  const noActiveBoosters = totalBoosters - activeBoosters
-  const retired = boostersData.filter((b) => b.status === "retired").length
-  const destroyed = boostersData.filter((b) => b.status === "destroyed").length
-  const discarded = boostersData.filter((b) => b.status === "discarded" || b.status === "Desechado").length
-  const testing = boostersData.filter((b) => b.status === "testing" || b.status === "En desarrollo").length
-  let totalFlights = 0
+	const totalBoosters = boostersData.length
+	const activeBoosters = boostersData.filter((b) => b.status === "active").length
+	const noActiveBoosters = totalBoosters - activeBoosters
+	const retired = boostersData.filter((b) => b.status === "retired").length
+	const destroyed = boostersData.filter((b) => b.status === "destroyed").length
+	const discarded = boostersData.filter((b) => b.status === "discarded" || b.status === "Desechado").length
+	const testing = boostersData.filter((b) => b.status === "testing" || b.status === "En pruebas" || b.status === "Desarrollo").length
+	let totalFlights = 0
 
-  boostersData.forEach((booster) => {
-    totalFlights += booster.flights
-  })
+	boostersData.forEach((booster) => {
+		totalFlights += booster.flights
+	})
 
-  totalBoostersEl.textContent = totalBoosters
-  activeBoostersEl.textContent = activeBoosters
-  noActiveBoostersEl.textContent = noActiveBoosters
+	totalBoostersEl.textContent = totalBoosters
+	activeBoostersEl.textContent = activeBoosters
+	noActiveBoostersEl.textContent = noActiveBoosters
 
-  document.getElementById("retired-boosters").textContent = retired
-  document.getElementById("destroyed-boosters").textContent = destroyed
-  document.getElementById("discarded-boosters").textContent = discarded
-  document.getElementById("testing-boosters").textContent = testing
-  totalFlightsEl.textContent = totalFlights
+	document.getElementById("retired-boosters").textContent = retired
+	document.getElementById("destroyed-boosters").textContent = destroyed
+	document.getElementById("discarded-boosters").textContent = discarded
+	document.getElementById("testing-boosters").textContent = testing
+	totalFlightsEl.textContent = totalFlights
 }
 
 // Establecer filtro activo
 function setActiveFilter(filter) {
-  filterButtons.forEach((btn) => btn.classList.remove("active"))
-  document.querySelector(`[data-filter="${filter}"]`).classList.add("active")
-  currentFilter = filter
+	filterButtons.forEach((btn) => btn.classList.remove("active"))
+	document.querySelector(`[data-filter="${filter}"]`).classList.add("active")
+	currentFilter = filter
 }
 
 // Filtrar propulsores
 function filterBoosters(filter) {
-  if (filter === "all") {
-    filteredBoosters = [...boostersData]
-  } else {
-    filteredBoosters = boostersData.filter((booster) => booster.status === filter)
-  }
-  renderBoosters()
+	if (filter === "all") {
+		filteredBoosters = [...boostersData]
+	} else if (filter === "discarded") {
+		filteredBoosters = boostersData.filter((booster) => booster.status === "discarded" || booster.status === "Desechado")
+	} else if (filter === "scheduled") {
+		filteredBoosters = boostersData.filter((booster) => hasScheduledFlight(booster))
+	} else {
+		filteredBoosters = boostersData.filter((booster) => booster.status === filter)
+	}
+	renderBoosters()
 }
 
 // Renderizar propulsores
 function renderBoosters() {
-  boostersGrid.innerHTML = ""
+	boostersGrid.innerHTML = ""
 
-  if (filteredBoosters.length === 0) {
-    boostersGrid.innerHTML = '<div class="loading">No se encontraron propulsores para este filtro.</div>'
-    return
-  }
+	if (filteredBoosters.length === 0) {
+		boostersGrid.innerHTML = '<div class="loading">No se encontraron propulsores para este filtro.</div>'
+		return
+	}
 
-  filteredBoosters.forEach((booster) => {
-    const boosterCard = createBoosterCard(booster)
-    boostersGrid.appendChild(boosterCard)
-  })
+	filteredBoosters.forEach((booster) => {
+		console.log(booster);
+		const boosterCard = createBoosterCard(booster)
+		boostersGrid.appendChild(boosterCard)
+	})
 }
 
 function hasScheduledFlight(booster) {
-  return booster.missions.some((mission) => mission.programado === true)
+	return booster.missions.some((mission) => mission.programado === true)
 }
 
 // Crear tarjeta de propulsor
 function createBoosterCard(booster) {
-  const card = document.createElement("div")
-  card.className = "booster-card"
-  card.addEventListener("click", () => openModal(booster))
+	const card = document.createElement("div")
+	card.className = "booster-card"
+	card.addEventListener("click", () => openModal(booster))
 
-  const statusClass = `status-${booster.status.toLowerCase().replace(" ", "-")}`
-  const statusText = traducirEstado(booster.status)
+	const statusClass = `status-${booster.status.toLowerCase().replace(" ", "-")}`
+	const statusText = traducirEstado(booster.status)
 
-  const typeClass = `type-${booster.type}`;
-  const typeText = booster.type === "F9" ? "Falcon 9" : booster.type?.includes("FH") ? "Falcon Heavy" : "N/A"
+	const typeClass = `type-${booster.type}`;
+	const typeText = booster.type === "F9" ? "Falcon 9" : booster.type?.includes("FH") ? "Falcon Heavy" : "N/A"
 
-  const lastFlightText = booster.lastFlight
-    ? `Último vuelo: ${formatDate(booster.lastFlight)}`
-    : "Sin vuelos realizados"
+	const lastFlightText = booster.lastFlight
+		? `Último vuelo: ${formatDate(booster.lastFlight)}`
+		: "Sin vuelos realizados";
+	if (hasScheduledFlight(booster)) {
+		card.classList.add("has-scheduled-flight");
+	}
 
-  const scheduledIndicator = hasScheduledFlight(booster)
-    ? '<div class="scheduled-indicator">📅 Próximo vuelo programado</div>'
-    : ""
-
-  card.innerHTML = `
+	card.innerHTML = `
+        ${typeof booster.block === "string" ? `<span class="block">Block ${booster.block || "N/A"}</span>` : ""}
         <div class="booster-image">
-            <img src="${booster.image}" alt="${booster.name}" 
+            <img src="https://spacexboosters.netlify.app/${booster.image}" alt="${booster.name}" 
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background: linear-gradient(45deg, #f0f0f0, #e0e0e0); color: #6b7280;">
+            <div class="altImage">
                 ${booster.name}
             </div>
         </div>
@@ -301,69 +307,68 @@ function createBoosterCard(booster) {
             <h3 class="booster-name">${booster.name}</h3>
             <span class="booster-type ${typeClass}">${typeText}</span>
             <span class="booster-status ${statusClass}">${statusText}</span>
-            ${scheduledIndicator}
             <p class="booster-flights">Vuelos realizados: ${booster.flights}</p>
             <p class="booster-first-flight">${lastFlightText}</p>
         </div>
     `
 
-  return card
+	return card
 }
 
 function getLandingClass(landing) {
-  if (!landing || landing === null) return "landing-expendable"
-  if (landing === "Desechado") return "landing-expendable"
-  if (landing.includes("ASOG")) return "landing-asog"
-  if (landing.includes("JRTI")) return "landing-jrti"
-  if (landing.includes("OCISLY")) return "landing-ocisly"
-  if (landing.includes("LZ-")) return "landing-lz"
-  return ""
+	if (!landing || landing === null) return "landing-expendable"
+	if (landing === "Desechado") return "landing-expendable"
+	if (landing.includes("ASOG")) return "landing-asog"
+	if (landing.includes("JRTI")) return "landing-jrti"
+	if (landing.includes("OCISLY")) return "landing-ocisly"
+	if (landing.includes("LZ-")) return "landing-lz"
+	return ""
 }
 
 function getLaunchPadClass(launchPad) {
-  if (!launchPad || launchPad === null) return ""
-  if (launchPad.includes("SLC-40")) return "launchpad-cape"
-  if (launchPad.includes("LC-39A")) return "launchpad-ksc"
-  if (launchPad.includes("SLC-4E")) return "launchpad-vnb"
-  return ""
+	if (!launchPad || launchPad === null) return ""
+	if (launchPad.includes("SLC-40")) return "launchpad-cape"
+	if (launchPad.includes("LC-39A")) return "launchpad-ksc"
+	if (launchPad.includes("SLC-4E")) return "launchpad-vnb"
+	return ""
 }
 
 function getMissionRowId(mission) {
-  if (mission.success === true) return "mission-success"
-  if (mission.success === false) return "mission-failure"
-  return "mission-unknown"
+	if (mission.success === true) return "mission-success"
+	if (mission.success === false) return "mission-failure"
+	return "mission-unknown"
 }
 
 function traducirEstado(estado) {
-  const estados = {
-    "active": "Activo",
-    "retired": "Retirado",
-    "destroyed": "Destruido",
-    "testing": "En Pruebas",
-    "unknown": "Desconocido"
-  }
+	const estados = {
+		"active": "Activo",
+		"retired": "Retirado",
+		"destroyed": "Destruido",
+		"testing": "En Pruebas",
+		"unknown": "Desconocido"
+	}
 
-  // Convertimos a minúsculas para evitar problemas con mayúsculas
-  return estados[estado.toLowerCase()] || estado;
+	// Convertimos a minúsculas para evitar problemas con mayúsculas
+	return estados[estado.toLowerCase()] || estado;
 }
 
 
 // Abrir modal
 function openModal(booster) {
-  const statusClass = `status-${booster.status.toLowerCase().replace(" ", "-")}`
-  const statusText = traducirEstado(booster.status)
+	const statusClass = `status-${booster.status.toLowerCase().replace(" ", "-")}`
+	const statusText = traducirEstado(booster.status)
 
-  const typeClass = `type-${booster.type}`
-  let typeText
-  if (booster.type === "F9") typeText = "Falcon 9"
-  else if (booster.type?.includes("FH")) typeText = "Falcon Heavy"
-  else if (booster.type === "FHc") typeText = "Falcon Heavy Center Core"
-  else if (booster.type === "FHs") typeText = "Falcon Heavy Side Core"
-  else typeText = "N/A"
+	const typeClass = `type-${booster.type}`
+	let typeText
+	if (booster.type === "F9") typeText = "Falcon 9"
+	else if (booster.type?.includes("FH")) typeText = "Falcon Heavy"
+	else if (booster.type === "FHc") typeText = "Falcon Heavy Center Core"
+	else if (booster.type === "FHs") typeText = "Falcon Heavy Side Core"
+	else typeText = "N/A"
 
-  let flightHistoryHTML = ""
-  if (booster.missions.length > 0) {
-    flightHistoryHTML = `
+	let flightHistoryHTML = ""
+	if (booster.missions.length > 0) {
+		flightHistoryHTML = `
             <div class="flight-history">
                 <h3>Historial de Vuelos</h3>
                 <table class="flight-details-table">
@@ -378,13 +383,12 @@ function openModal(booster) {
                     </thead>
                     <tbody>
                         ${booster.missions
-        .map(
-          (mission, index) => `
+				.map(
+					(mission, index) => `
                             <tr ${mission.programado ? 'class="scheduled-flight"' : ""} id="${getMissionRowId(mission)}">
                                 <td><strong>${index + 1}</strong></td>
                                 <td>
                                     ${mission.name}
-                                    ${mission.programado ? '<span class="scheduled-badge">PROGRAMADO</span>' : ""}
                                 </td>
                                 <td>${formatDate(mission.date)}</td>
                                 <td>
@@ -399,14 +403,14 @@ function openModal(booster) {
                                 </td>
                             </tr>
                         `,
-        )
-        .join("")}
+				)
+				.join("")}
                     </tbody>
                 </table>
             </div>
         `
-  } else {
-    flightHistoryHTML = `
+	} else {
+		flightHistoryHTML = `
             <div class="flight-history">
                 <h3>Historial de Vuelos</h3>
                 <p style="color: var(--muted-foreground); text-align: center; padding: 2rem;">
@@ -414,53 +418,73 @@ function openModal(booster) {
                 </p>
             </div>
         `
-  }
+	}
 
-  modalBody.innerHTML = `
+	const dates = booster.missions
+		.filter((m) => !m.programado)
+		.map((m) => new Date(m.date).getTime())
+		.sort((a, b) => a - b);
+	let averageDaysBetweenFlights = "N/A";
+	if (dates.length >= 2) {
+		let totalDays = 0;
+		for (let i = 1; i < dates.length; i++) {
+			const diffTime = Math.abs(dates[i] - dates[i - 1]);
+			const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+			totalDays += diffDays;
+		}
+		averageDaysBetweenFlights = Math.round(totalDays / (dates.length - 1)) + " días";
+	}
+
+	modalBody.innerHTML = `
         <div class="modal-header">
             <img src="${booster.image}" alt="${booster.name}" class="modal-image"
-                 onerror="this.style.display='none';">
+                 onerror="this.style.display='none';" loading="lazy">
             <h2 class="modal-title">${booster.name}</h2>
+            ${booster.missions.some(mission => mission.programado) ? '<span class="scheduled-badge">VUELO PROGRAMADO</span>' : ""}
             <span class="booster-type ${typeClass}">${typeText}</span>
             <span class="booster-status ${statusClass}">${statusText}</span>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-            <div style="text-align: center; padding: 1rem; background: var(--muted); border-radius: var(--radius);">
-                <div style="font-size: 2rem; font-weight: bold; color: var(--accent);">${booster.flights}</div>
-                <div style="color: var(--muted-foreground);">Vuelos Totales</div>
-            </div>
-            <div style="text-align: center; padding: 1rem; background: var(--muted); border-radius: var(--radius);">
-                <div style="font-size: 1.2rem; font-weight: bold; color: var(--accent);">
-                    ${booster.firstFlight ? formatDate(booster.firstFlight) : "N/A"}
-                </div>
+        <div class="booster-dates">
+            <div class="booster-date">
                 <div style="color: var(--muted-foreground);">Primer Vuelo</div>
+                <h3>
+                    ${booster.firstFlight ? formatDate(booster.firstFlight) : "N/A"}
+                </h3>
             </div>
-            <div style="text-align: center; padding: 1rem; background: var(--muted); border-radius: var(--radius);">
-                <div style="font-size: 1.2rem; font-weight: bold; color: var(--accent);">
-                    ${booster.lastFlight ? formatDate(booster.lastFlight) : "N/A"}
-                </div>
+            <div class="booster-date">
+                <div style="color: var(--muted-foreground);">Vuelos Totales</div>
+                <h3>${booster.flights}</h3>
+            </div>
+            ${booster.missions.length >= 2 ? `<div class="booster-date">
+                <div style="color: var(--muted-foreground);">Entre vuelos</div>
+                <h3>${averageDaysBetweenFlights}</h3>
+            </div>` : ""}
+            <div class="booster-date">
                 <div style="color: var(--muted-foreground);">Último Vuelo</div>
+                <h3>
+                    ${booster.lastFlight ? formatDate(booster.lastFlight) : "N/A"}
+                </h3>
             </div>
         </div>
         ${flightHistoryHTML}
     `
 
-  modal.style.display = "block"
-  document.body.classList.add("modal-open")
+	modal.style.display = "block"
+	document.body.classList.add("modal-open")
 
-  const url = new URL(window.location)
-  url.searchParams.set("booster", booster.name)
-  window.history.pushState({}, "", url)
+	const url = new URL(window.location)
+	url.searchParams.set("booster", booster.name)
+	window.history.pushState({}, "", url)
 }
 
 // Cerrar modal
 function closeModal() {
-  modal.style.display = "none"
-  document.body.classList.remove("modal-open")
+	modal.style.display = "none"
+	document.body.classList.remove("modal-open")
 
-  const url = new URL(window.location)
-  url.searchParams.delete("booster")
-  window.history.pushState({}, "", url)
+	const url = new URL(window.location)
+	url.searchParams.delete("booster")
+	window.history.pushState({}, "", url)
 }
 
-loadConfig()
+loadConfig();
