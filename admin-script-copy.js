@@ -42,6 +42,7 @@ async function loadData() {
       boostersData.push({
         id: doc.id,
         name: data.name,
+        block: data.block,
         status: data.status,
         type: data.type,
         image: data.image,
@@ -162,7 +163,6 @@ function createBoosterCard(booster) {
   const statusClass = booster.status.toLowerCase().replace(" ", "-")
   const vuelosRealizados = booster.missions.filter((m) => !m.programado).length
 
-  // Contenido de la tarjeta
   card.innerHTML = `
     <div class="card-content">
       <div class="admin-booster-header">
@@ -174,7 +174,9 @@ function createBoosterCard(booster) {
       </div>
       <div class="admin-booster-info">
         <p><strong>ID:</strong> ${booster.id}</p>
+        <p><strong>Nombre:</strong> ${booster.name}</p>
         <p><strong>Tipo:</strong> ${booster.type}</p>
+        <p><strong>Block:</strong> ${booster.block || "N/A"}</p> <!-- ← Block agregado -->
         <p><strong>Estado:</strong> <span class="status-badge status-${statusClass}">${booster.status}</span></p>
         <p><strong>Vuelos:</strong> ${vuelosRealizados}</p>
       </div>
@@ -191,11 +193,9 @@ function createBoosterCard(booster) {
   // Agregar clase para manejar background y blur
   card.classList.add(booster.image ? "with-bg" : "no-bg")
 
-  // Si hay imagen, la ponemos como atributo data para usarla en CSS
   if (booster.image) {
-    card.classList.add("with-bg");
-    card.style.setProperty("--bg-image", `url('${booster.image}')`);
-  }  
+    card.style.setProperty("--bg-image", `url('${booster.image}')`)
+  }
 
   return card
 }
@@ -236,6 +236,7 @@ window.editBooster = (boosterId) => {
   document.getElementById("boosterId").value = booster.id
   document.getElementById("boosterName").value = booster.name
   document.getElementById("boosterType").value = booster.type
+  document.getElementById("boosterBlock").value = booster.block || ""   // ← Block agregado
   document.getElementById("boosterStatus").value = booster.status
   document.getElementById("boosterImage").value = booster.image
 
@@ -264,10 +265,11 @@ document.getElementById("boosterForm").addEventListener("submit", async (e) => {
   const boosterData = {
     name: document.getElementById("boosterName").value,
     type: document.getElementById("boosterType").value,
+    block: document.getElementById("boosterBlock").value.replace(/\D/g, ""), // <- Solo números
     status: document.getElementById("boosterStatus").value,
     image: document.getElementById("boosterImage").value,
     missions: [],
-  }
+  }  
 
   try {
     if (editingBoosterId) {
