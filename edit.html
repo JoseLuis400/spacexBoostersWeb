@@ -1,167 +1,217 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - SpaceX Boosters</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="admin-styles.css">
-    <link rel="stylesheet" href="login.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - SpaceX Boosters</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin-styles.css">
+
+  <!-- Ocultar secciones inicialmente para evitar flash -->
+  <style>
+    #loginSection, #adminSection {
+      display: none;
+    }
+  </style>
+
+  <script type="module">
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const auth = getAuth();
+
+      onAuthStateChanged(auth, (user) => {
+        const loginSection = document.getElementById("loginSection");
+        const adminSection = document.getElementById("adminSection");
+
+        if (!user) {
+          // Usuario no logueado: cargamos CSS de login y mostramos login
+          const loginCss = document.createElement('link');
+          loginCss.rel = 'stylesheet';
+          loginCss.href = 'login.css';
+          document.head.appendChild(loginCss);
+
+          loginSection.style.display = "block";
+          adminSection.style.display = "none";
+        } else {
+          // Usuario logueado: mostramos admin, no cargamos login.css
+          loginSection.style.display = "none";
+          adminSection.style.display = "block";
+        }
+      });
+    });
+  </script>
 </head>
 <body>
 
-    <div id="loginSection">
-        <input type="email" id="loginEmail" placeholder="Email">
-        <input type="password" id="loginPassword" placeholder="Contraseña">
-        <button id="loginBtn">Iniciar sesión</button>
-      </div>
-      
-      <div id="userInfo">
-        Conectado como: <span id="userEmail">--</span>
-        <button id="logoutBtn">Cerrar sesión</button>
-      </div>
-      
+  <!-- SECCIÓN LOGIN -->
+  <div id="loginSection">
+    <a href="https://spacexboosters.netlify.app/" class="back-link">← Volver al sitio</a>
+    <h3 style="text-align: center; padding-bottom: 25px;">Iniciar sesión</h3>
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginPassword" placeholder="Contraseña">
+    <button id="loginBtn">Iniciar sesión</button>
+  </div>
 
-      <div id="adminSection" style="display:none">
-        <!-- Aquí tu panel de boosters actual -->
-      
+  <div id="userInfo">
+    Conectado como: <span id="userEmail">--</span>
+    <button id="logoutBtn">Cerrar sesión</button>
+  </div>
+
+  <!-- Fondo dinámico con imágenes aleatorias -->
+  <script>
+    const backgrounds = [
+      'https://spacexboosters.netlify.app/img/B1094.jpg',
+      'https://spacexboosters.netlify.app/img/B1090.jpg',
+      'https://spacexboosters.netlify.app/img/B1085.jpg',
+      'https://spacexboosters.netlify.app/img/B1081.jpg',
+      'https://spacexboosters.netlify.app/img/B1080.jpg',
+      'https://spacexboosters.netlify.app/img/B1067.jpg'
+    ];
+
+    function changeBackgroundRandom() {
+      const randomIndex = Math.floor(Math.random() * backgrounds.length);
+      document.body.style.setProperty('--bg-image', `url('${backgrounds[randomIndex]}')`);
+    }
+
+    setInterval(changeBackgroundRandom, 10000);
+    changeBackgroundRandom();
+  </script>
+
+  <!-- SECCIÓN ADMIN -->
+  <div id="adminSection">
     <header>
-        <div class="container">
-            <h1>Panel de Administración</h1>
-            <p>Gestiona los propulsores y sus misiones</p>
-            <a href="https://spacexboosters.netlify.app/" class="back-link">← Volver al sitio</a>
-            <div id="update-info">
-                Última actualización: <span id="last-update">Cargando...</span>
-            </div>
+      <div class="container">
+        <h1>Panel de Administración</h1>
+        <p>Gestiona los propulsores y sus misiones</p>
+        <a href="https://spacexboosters.netlify.app/" class="back-link">← Volver al sitio</a>
+        <div id="update-info">
+          Última actualización: <span id="last-update">Cargando...</span>
         </div>
+      </div>
     </header>
 
-    
-
     <main class="container admin-main">
-        <div class="admin-controls">
-            <button id="addBoosterBtn" class="btn btn-primary">+ Agregar Propulsor</button>
-            <button id="btn-actualizar" class="btn btn-primary">🕒 Actualizar Tiempo</button>
-        </div>
+      <div class="admin-controls">
+        <button id="addBoosterBtn" class="btn btn-primary">+ Agregar Propulsor</button>
+        <button id="btn-actualizar" class="btn btn-primary">🕒 Actualizar Tiempo</button>
+      </div>
 
-        <div id="boostersAdmin" class="boosters-admin-grid"></div>
+      <div id="boostersAdmin" class="boosters-admin-grid"></div>
     </main>
 
-     Modal para agregar/editar propulsor 
+    <!-- Modal Agregar/Editar Propulsor -->
     <div id="boosterModal" class="modal">
-        <div class="modal-content admin-modal">
-            <span class="close">&times;</span>
-            <h2 id="modalTitle">Agregar Propulsor</h2>
-            
-            <form id="boosterForm">
-                <div class="form-group">
-                    <label for="boosterId">ID del Propulsor:</label>
-                    <input type="text" id="boosterId" required placeholder="B1085">
-                </div>
-
-                <div class="form-group">
-                    <label for="boosterName">Nombre:</label>
-                    <input type="text" id="boosterName" required placeholder="B1085">
-                </div>
-
-                <div class="form-group">
-                    <label for="boosterType">Tipo:</label>
-                    <select id="boosterType" required>
-                        <option value="F9">Falcon 9</option>
-                        <option value="FH">Falcon Heavy</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="boosterStatus">Estado:</label>
-                    <select id="boosterStatus" required>
-                        <option value="active">Activo</option>
-                        <option value="Retirado">Retirado</option>
-                        <option value="Destruido">Destruido</option>
-                        <option value="En Pruebas">En Pruebas</option>
-                        <option value="Desechado">Desechado</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="boosterImage">Imagen (ruta):</label>
-                    <input type="text" id="boosterImage" required placeholder="img/B1085.jpg">
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Guardar Propulsor</button>
-                    <button type="button" class="btn btn-secondary" id="cancelBoosterBtn">Cancelar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-     Modal para agregar/editar misión 
-    <div id="missionModal" class="modal">
-        <div class="modal-content admin-modal">
-            <span class="close">&times;</span>
-            <h2 id="missionModalTitle">Agregar Misión</h2>
-            
-            <form id="missionForm">
-                <div class="form-group">
-                    <label for="missionName">Nombre de la Misión:</label>
-                    <input type="text" id="missionName" required placeholder="Starlink 7-8">
-                </div>
-
-                <div class="form-group">
-                    <label for="missionDate">Fecha:</label>
-                    <input type="date" id="missionDate" required>
-                    <small>Para fechas flexibles como "NET 2025", edita manualmente en Firebase</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="missionSuccess">Éxito:</label>
-                    <select id="missionSuccess">
-                        <option value="null">Pendiente (null)</option>
-                        <option value="true">Sí</option>
-                        <option value="false">No</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="missionLanding">Aterrizaje:</label>
-                    <select id="missionLanding">
-                        <option value="">Desechado</option>
-                        <option value="OCISLY">OCISLY</option>
-                        <option value="JRTI">JRTI</option>
-                        <option value="ASOG">ASOG</option>
-                        <option value="LZ-1">LZ-1</option>
-                        <option value="LZ-2">LZ-2</option>
-                        <option value="LZ-4">LZ-4</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="missionLaunchPad">Plataforma de Lanzamiento:</label>
-                    <select id="missionLaunchPad" required>
-                        <option value="SLC-40">SLC-40</option>
-                        <option value="LC-39A">LC-39A</option>
-                        <option value="SLC-4E">SLC-4E</option>
-                    </select>
-                </div>
-
-                <div class="form-group checkbox-group">
-                    <label>
-                        <input type="checkbox" id="missionProgramado">
-                        Vuelo Programado (futuro)
-                    </label>
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Guardar Misión</button>
-                    <button type="button" class="btn btn-secondary" id="cancelMissionBtn">Cancelar</button>
-                </div>
-            </form>
-        </div>
-    </div>
+      <div class="modal-content admin-modal">
+        <span class="close">&times;</span>
+        <h2 id="modalTitle">Agregar Propulsor</h2>
+        <form id="boosterForm">
+          <div class="form-group">
+            <label for="boosterId">ID del Propulsor:</label>
+            <input type="text" id="boosterId" required placeholder="B1085">
+          </div>
+          <div class="form-group">
+            <label for="boosterName">Nombre:</label>
+            <input type="text" id="boosterName" required placeholder="B1085">
+          </div>
+          <div class="form-group">
+            <label for="boosterType">Tipo:</label>
+            <select id="boosterType" required>
+              <option value="F9">Falcon 9</option>
+              <option value="FH">Falcon Heavy</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="boosterStatus">Estado:</label>
+            <select id="boosterStatus" required>
+              <option value="active">Activo</option>
+              <option value="Retirado">Retirado</option>
+              <option value="Destruido">Destruido</option>
+              <option value="Desechado">Desechado</option>
+              <option value="testing">En Pruebas</option>
+              <option value="desarrollo">En desarrollo</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="boosterImage">Imagen (ruta):</label>
+            <input type="text" id="boosterImage" required placeholder="img/B1085.jpg">
+          </div>
+          <div class="form-group">
+            <label for="boosterImageFile">Imagen del Booster:</label>
+            <input type="file" id="boosterImageFile" accept="image/*">
+            <small>Si quieres reemplazar la imagen existente, sube otra.</small>
+          </div>          
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Guardar Propulsor</button>
+            <button type="button" class="btn btn-secondary" id="cancelBoosterBtn">Cancelar</button>
+          </div>
+        </form>
       </div>
-     Cambiando a módulo para usar Firebase 
-    <script type="module" src="admin-script.js"></script>
-    <script type="module" src="login.js"></script>
+    </div>
+
+    <!-- Modal Agregar/Editar Misión -->
+    <div id="missionModal" class="modal">
+      <div class="modal-content admin-modal">
+        <span class="close">&times;</span>
+        <h2 id="missionModalTitle">Agregar Misión</h2>
+        <form id="missionForm">
+          <div class="form-group">
+            <label for="missionName">Nombre de la Misión:</label>
+            <input type="text" id="missionName" required placeholder="Starlink 7-8">
+          </div>
+          <div class="form-group">
+            <label for="missionDate">Fecha:</label>
+            <input type="date" id="missionDate" required>
+            <small>Para fechas flexibles como "NET 2025", edita manualmente en Firebase</small>
+          </div>
+          <div class="form-group">
+            <label for="missionSuccess">Éxito:</label>
+            <select id="missionSuccess">
+              <option value="null">Pendiente (null)</option>
+              <option value="true">Sí</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="missionLanding">Aterrizaje:</label>
+            <select id="missionLanding">
+              <option value="">Desechado</option>
+              <option value="OCISLY">OCISLY</option>
+              <option value="JRTI">JRTI</option>
+              <option value="ASOG">ASOG</option>
+              <option value="LZ-1">LZ-1</option>
+              <option value="LZ-2">LZ-2</option>
+              <option value="LZ-4">LZ-4</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="missionLaunchPad">Plataforma de Lanzamiento:</label>
+            <select id="missionLaunchPad" required>
+                <option value="SLC-40">SLC-40</option>
+                <option value="LC-39A">LC-39A</option>
+                <option value="SLC-4E">SLC-4E</option>
+            </select>
+        </div>
+        
+          <div class="form-group checkbox-group">
+            <label>
+              <input type="checkbox" id="missionProgramado">
+              Vuelo Programado (futuro)
+            </label>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Guardar Misión</button>
+            <button type="button" class="btn btn-secondary" id="cancelMissionBtn">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="admin-script.js"></script>
+  <script type="module" src="login.js"></script>
+
 </body>
 </html>

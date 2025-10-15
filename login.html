@@ -4,17 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - SpaceX Boosters</title>
-  <link rel="stylesheet" href="auth.css">
+  <link rel="stylesheet" href="login.css">
 </head>
 <body>
 
   <div id="loginContainer">
-    <h1>Iniciar Sesión</h1>
 
     <div id="loginSection">
-      <input type="email" id="loginEmail" placeholder="Email" required>
-      <input type="password" id="loginPassword" placeholder="Contraseña" required>
-      <button id="loginBtn">Iniciar sesión</button>
+      <h3 style="text-align: center; padding-bottom: 25px;">Iniciar sesión</h3>
+        <input type="email" id="loginEmail" placeholder="Email">
+        <input type="password" id="loginPassword" placeholder="Contraseña">
+        <button id="loginBtn">Iniciar sesión</button>
     </div>
 
     <!-- Para mostrar el usuario logueado si quieres -->
@@ -25,6 +25,32 @@
 
   </div>
 
+  <script>
+    // Array con las URLs de las imágenes que quieres mostrar
+const backgrounds = [
+'https://spacexboosters.netlify.app/img/B1094.jpg',
+'https://spacexboosters.netlify.app/img/B1090.jpg',
+'https://spacexboosters.netlify.app/img/B1085.jpg',
+'https://spacexboosters.netlify.app/img/B1081.jpg',
+'https://spacexboosters.netlify.app/img/B1080.jpg',
+'https://spacexboosters.netlify.app/img/B1067.jpg',
+];
+
+// Función para cambiar la imagen aleatoriamente
+function changeBackgroundRandom() {
+// Elegimos un índice aleatorio
+const randomIndex = Math.floor(Math.random() * backgrounds.length);
+// Aplicamos la imagen al CSS variable
+document.body.style.setProperty('--bg-image', `url('${backgrounds[randomIndex]}')`);
+}
+
+// Cambiamos la imagen cada 10 segundos
+setInterval(changeBackgroundRandom, 10000);
+
+// Inicializamos la primera imagen
+changeBackgroundRandom();
+
+  </script>
   <script type="module" src="login.js"></script>
 </body>
 </html>

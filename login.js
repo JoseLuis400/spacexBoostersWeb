@@ -62,11 +62,15 @@ window.login = async function (email, password) {
   try {
     await signInWithEmailAndPassword(auth, email, password);
     alert("Login exitoso");
+
+    // Redirigir a la página de edición
+    window.location.href = 'edit'; // <-- Cambia por tu URL real
   } catch (error) {
     console.error("Error login:", error.code, error.message);
     alert("Error al iniciar sesión: " + error.message);
   }
 };
+
 
 window.logout = async function () {
   try {

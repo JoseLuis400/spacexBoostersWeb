@@ -10,6 +10,8 @@ import {
   getDoc,
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"
 
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"; // <- Importar Auth
+
 const firebaseConfig = {
   apiKey: "AIzaSyAU8I3PbYOrd-qCSGNX3nyF6WWg0oIhAS8",
   authDomain: "spacexboosters.firebaseapp.com",
@@ -77,19 +79,39 @@ function getCurrentUTC() {
 }
 
 // Función para actualizar Firebase con la fecha/hora actual
+
+const auth = getAuth(app); // <- Crear instancia de Auth
 async function updateConfigUTC() {
   try {
     const configRef = doc(db, "data", "config");
     const currentUTC = getCurrentUTC();
 
+    // Obtener el usuario actual
+    const user = auth.currentUser;
+    let updatedBy = "Desconocido";
+
+    if (user) {
+      // Obtener nombre desde Firestore
+      const usersDoc = await getDoc(doc(db, "data", "users"));
+      if (usersDoc.exists()) {
+        const usersData = usersDoc.data();
+        const userData = usersData[user.uid];
+        if (userData && userData.name) {
+          updatedBy = userData.name;
+        }
+      }
+    }
+
+    // Actualizar fecha, hora y nombre del usuario
     await updateDoc(configRef, {
       updateDate: currentUTC.updateDate,
-      updateTime: currentUTC.updateTime
+      updateTime: currentUTC.updateTime,
+      updatedBy: updatedBy
     });
 
-    // Refrescamos la info en la página después de actualizar
-    document.getElementById("last-update").textContent = `${currentUTC.updateDate} • ${currentUTC.updateTime} UTC`;
-    console.log("Fecha y hora actualizadas en Firebase");
+    // Mostrar info actualizada en la página
+    document.getElementById("last-update").textContent = `${currentUTC.updateDate} • ${currentUTC.updateTime} UTC (por ${updatedBy})`;
+    console.log("Fecha, hora y usuario actualizados en Firebase");
   } catch (error) {
     console.error("Error al actualizar la config:", error);
     document.getElementById("last-update").textContent = "Error al actualizar";
@@ -104,7 +126,7 @@ async function loadConfig() {
     const configDoc = await getDoc(doc(db, "data", "config"));
     if (configDoc.exists()) {
       const data = configDoc.data();
-      document.getElementById("last-update").textContent = `${data.updateDate} • ${data.updateTime} UTC`;
+      document.getElementById("last-update").textContent = `${data.updateDate} • ${data.updateTime} UTC (por ${data.updatedBy})`;
     } else {
       document.getElementById("last-update").textContent = "Desconocido";
     }
@@ -138,34 +160,42 @@ function createBoosterCard(booster) {
   card.className = "admin-booster-card"
 
   const statusClass = booster.status.toLowerCase().replace(" ", "-")
-
   const vuelosRealizados = booster.missions.filter((m) => !m.programado).length
 
+  // Contenido de la tarjeta
   card.innerHTML = `
-        <div class="admin-booster-header">
-            <h3>${booster.name}</h3>
-            <div class="admin-booster-actions">
-                <button class="btn btn-edit" onclick="editBooster('${booster.id}')">✏️ Editar</button>
-                <button class="btn btn-danger" onclick="deleteBooster('${booster.id}')">🗑️ Eliminar</button>
-            </div>
+    <div class="card-content">
+      <div class="admin-booster-header">
+        <h3>${booster.name}</h3>
+        <div class="admin-booster-actions">
+          <button class="btn btn-edit" onclick="editBooster('${booster.id}')">✏️ Editar</button>
+          <button class="btn btn-danger" onclick="deleteBooster('${booster.id}')">🗑️ Eliminar</button>
         </div>
-        
-        <div class="admin-booster-info">
-            <p><strong>ID:</strong> ${booster.id}</p>
-            <p><strong>Tipo:</strong> ${booster.type}</p>
-            <p><strong>Estado:</strong> <span class="status-badge status-${statusClass}">${booster.status}</span></p>
-            <p><strong>Vuelos:</strong> ${vuelosRealizados}</p>
-            <p><strong>Imagen:</strong> ${booster.image}</p>
+      </div>
+      <div class="admin-booster-info">
+        <p><strong>ID:</strong> ${booster.id}</p>
+        <p><strong>Tipo:</strong> ${booster.type}</p>
+        <p><strong>Estado:</strong> <span class="status-badge status-${statusClass}">${booster.status}</span></p>
+        <p><strong>Vuelos:</strong> ${vuelosRealizados}</p>
+      </div>
+      <div class="missions-list">
+        <h4>Misiones (${booster.missions.length})</h4>
+        <div id="missions-${booster.id}" style="max-height: 400px; overflow-y: auto; padding-right: 0.5rem;">
+          ${booster.missions.map((mission, index) => createMissionItem(mission, index, booster.id)).join("")}
         </div>
-        
-        <div class="missions-list">
-            <h4>Misiones (${booster.missions.length})</h4>
-            <div id="missions-${booster.id}" style="max-height: 400px; overflow-y: auto; padding-right: 0.5rem;">
-                ${booster.missions.map((mission, index) => createMissionItem(mission, index, booster.id)).join("")}
-            </div>
-            <button class="btn add-mission-btn" onclick="addMission('${booster.id}')">+ Agregar Misión</button>
-        </div>
-    `
+        <button class="btn add-mission-btn" onclick="addMission('${booster.id}')">+ Agregar Misión</button>
+      </div>
+    </div>
+  `
+
+  // Agregar clase para manejar background y blur
+  card.classList.add(booster.image ? "with-bg" : "no-bg")
+
+  // Si hay imagen, la ponemos como atributo data para usarla en CSS
+  if (booster.image) {
+    card.classList.add("with-bg");
+    card.style.setProperty("--bg-image", `url('${booster.image}')`);
+  }  
 
   return card
 }
