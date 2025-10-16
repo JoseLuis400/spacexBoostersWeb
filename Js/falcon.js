@@ -280,7 +280,8 @@ function openModal(booster) {
 
     modalBody.innerHTML = `
         <div class="modal-header">
-            <img src="${booster.image}" alt="${booster.name}" class="modal-image" loading="lazy">
+            <img src="${booster.image}" alt="${booster.name}" class="modal-image" loading="lazy" 
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
             <h2 class="modal-title">${booster.name}</h2>
             ${hasScheduledFlight(booster)?'<span class="scheduled-badge">VUELO PROGRAMADO</span>':""}
             <span class="booster-type ${typeClass}">${typeText}</span>
