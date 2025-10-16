@@ -228,7 +228,7 @@ window.editBooster = (boosterId) => {
   document.getElementById("boosterName").value = booster.id
   document.getElementById("boosterDesc").value = booster.desc
   document.getElementById("boosterType").value = booster.type || ""
-  document.getElementById("boosterBlock").value = booster.block || ""   // ← Block agregado
+  document.getElementById("boosterBlock").value = `Block${booster.block}` || ""   // ← Block agregado
   document.getElementById("boosterStatus").value = booster.status
   document.getElementById("boosterImage").value = booster.image
 
@@ -307,7 +307,7 @@ window.editBooster = (boosterId) => {
   document.getElementById("boosterName").value = booster.name  // ← CORRECTO
   document.getElementById("boosterDesc").value = booster.desc
   document.getElementById("boosterType").value = booster.type || ""
-  document.getElementById("boosterBlock").value = booster.block || ""
+  document.getElementById("boosterBlock").value = booster.block || ""   // ← Block agregado
   document.getElementById("boosterStatus").value = booster.status
   document.getElementById("boosterImage").value = booster.image
   document.getElementById("boosterModal").style.display = "block"
