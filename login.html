@@ -4,18 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - SpaceX Boosters</title>
-  <link rel="stylesheet" href="login.css">
+  <link rel="stylesheet" href="css/login.css">
 </head>
 <body>
 
   <div id="loginContainer">
 
-    <div id="loginSection">
-      <h3 style="text-align: center; padding-bottom: 25px;">Iniciar sesión</h3>
-        <input type="email" id="loginEmail" placeholder="Email">
-        <input type="password" id="loginPassword" placeholder="Contraseña">
-        <button id="loginBtn">Iniciar sesión</button>
-    </div>
+    <!-- SECCIÓN LOGIN -->
+  <div id="loginSection">
+    <a href="https://spacexboosters.netlify.app/" class="back-link">← Volver al sitio</a>
+    <h3 style="text-align: center; padding-bottom: 25px;">Iniciar sesión</h3>
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginPassword" placeholder="Contraseña">
+    <button id="loginBtn">Iniciar sesión</button>
+  </div>
 
     <!-- Para mostrar el usuario logueado si quieres -->
     <div id="userInfo">
@@ -23,34 +25,34 @@
       <button id="logoutBtn">Cerrar sesión</button>
     </div>
 
+    <script type="module">
+      import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  
+      document.addEventListener('DOMContentLoaded', () => {
+        const auth = getAuth();
+  
+        onAuthStateChanged(auth, (user) => {
+          const loginSection = document.getElementById("loginSection");
+          const adminSection = document.getElementById("adminSection");
+  
+          if (!user) {
+            // Usuario no logueado: cargamos CSS de login y mostramos login
+            const loginCss = document.createElement('link');
+            loginCss.rel = 'stylesheet';
+            loginCss.href = 'css/login.css';
+            document.head.appendChild(loginCss);
+  
+            loginSection.style.display = "block";
+            adminSection.style.display = "none";
+          } else {
+            // Usuario logueado: mostramos admin, no cargamos login.css
+            loginSection.style.display = "none";
+            adminSection.style.display = "block";
+          }
+        });
+      });
+    </script>
   </div>
-
-  <script>
-    // Array con las URLs de las imágenes que quieres mostrar
-    const backgrounds = [
-      'https://spacexboosters.netlify.app/img2/B1094.jpg',
-      'https://spacexboosters.netlify.app/img2/B1090.jpg',
-      'https://spacexboosters.netlify.app/img2/B1085.jpg',
-      'https://spacexboosters.netlify.app/img2/B1081.jpg',
-      'https://spacexboosters.netlify.app/img2/B1080.jpg',
-      'https://spacexboosters.netlify.app/img2/B1067.jpg'
-    ];
-
-// Función para cambiar la imagen aleatoriamente
-function changeBackgroundRandom() {
-// Elegimos un índice aleatorio
-const randomIndex = Math.floor(Math.random() * backgrounds.length);
-// Aplicamos la imagen al CSS variable
-document.body.style.setProperty('--bg-image', `url('${backgrounds[randomIndex]}')`);
-}
-
-// Cambiamos la imagen cada 10 segundos
-setInterval(changeBackgroundRandom, 10000);
-
-// Inicializamos la primera imagen
-changeBackgroundRandom();
-
-  </script>
-  <script type="module" src="login.js"></script>
+  <script type="module" src="js/login.js"></script>
 </body>
 </html>

@@ -92,13 +92,6 @@ function getMissionRowId(mission) {
     return "mission-unknown";
 }
 
-function hideLoader() {
-    const loader = document.getElementById("loader");
-    if (loader) {
-        loader.classList.add("fade-out");
-        setTimeout(() => loader.remove(), 600);
-    }
-}
 
 function getQueryParam(param) {
     const urlParams = new URLSearchParams(window.location.search);
@@ -136,6 +129,7 @@ async function loadBoostersData() {
             .map(async docSnap => {
                 const data = docSnap.data();
                 const imageURL = await getBoosterImageURL(data.image || "placeholder.png");
+                const descr = data.desc || "No disponible";
                 return {
                     id: docSnap.id,
                     name: data.name,
@@ -221,7 +215,8 @@ function createBoosterCard(booster) {
     card.innerHTML = `
         ${typeof booster.block === "string" ? `<span class="block">Block ${booster.block || "N/A"}</span>` : ""}
         <div class="booster-image">
-            <img src="${booster.image}" alt="${booster.name}" loading="lazy">
+            <img src="${booster.image}" alt="${booster.name}" loading="lazy" 
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
             <div class="altImage">${booster.name}</div>
         </div>
         <div class="booster-content">
@@ -352,6 +347,20 @@ function updateStats() {
     activeBoostersEl.textContent = activeBoosters;
     noActiveBoostersEl.textContent = noActiveBoosters;
     totalFlightsEl.textContent = totalFlights;
+    const retired = boostersData.filter((b) => b.status === "retired").length
+	const destroyed = boostersData.filter((b) => b.status === "destroyed").length
+	const discarded = boostersData.filter((b) => b.status === "discarded" || b.status === "Desechado").length
+	const testing = boostersData.filter((b) => b.status === "testing" || b.status === "En pruebas" || b.status === "Desarrollo").length
+
+	totalBoostersEl.textContent = totalBoosters
+	activeBoostersEl.textContent = activeBoosters
+	noActiveBoostersEl.textContent = noActiveBoosters
+
+	document.getElementById("retired-boosters").textContent = retired
+	document.getElementById("destroyed-boosters").textContent = destroyed
+	document.getElementById("discarded-boosters").textContent = discarded
+	document.getElementById("testing-boosters").textContent = testing
+	totalFlightsEl.textContent = totalFlights
 }
 
 // --------------------- INICIALIZACIÓN ---------------------
