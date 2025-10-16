@@ -545,6 +545,17 @@ body {
   justify-content: center;
 }
 
+.booster-description {
+  background: var(--muted);
+  border-radius: var(--radius);
+  border: 2px solid rgba(200 200 200 / 10%);
+  padding: 1rem;
+}
+
+.booster-description span {
+  color: var(--accent);
+}
+
 .booster-date {
   text-align: center;
   flex: 1;

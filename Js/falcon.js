@@ -129,13 +129,14 @@ async function loadBoostersData() {
             .map(async docSnap => {
                 const data = docSnap.data();
                 const imageURL = await getBoosterImageURL(data.image || "placeholder.png");
-                const descr = data.desc || "No disponible";
+                const descr = data.desc;
                 return {
                     id: docSnap.id,
                     name: data.name,
                     block: data.block,
                     status: data.status,
                     type: data.type,
+                    desc: descr,
                     image: imageURL,
                     missions: data.missions || [],
                 };
@@ -277,6 +278,12 @@ function openModal(booster) {
     } else {
         flightHistoryHTML = `<div class="flight-history"><h3>Historial de Vuelos</h3><p style="color: var(--muted-foreground); text-align: center; padding: 2rem;">Este propulsor aún no ha realizado vuelos.</p></div>`;
     }
+    let descripcion;
+    if(booster.desc) {
+        descripcion = `<div class="booster-description"><span>Descripción:</span> ${booster.desc}</div>`
+    } else {
+        descripcion = ``
+    }
 
     modalBody.innerHTML = `
         <div class="modal-header">
@@ -287,6 +294,7 @@ function openModal(booster) {
             <span class="booster-type ${typeClass}">${typeText}</span>
             <span class="booster-status ${statusClass}">${statusText}</span>
         </div>
+        ${descripcion}
         <div class="booster-dates">
             <div class="booster-date"><div style="color: var(--muted-foreground);">Primer Vuelo</div><h3>${booster.firstFlight?formatDate(booster.firstFlight):"N/A"}</h3></div>
             <div class="booster-date"><div style="color: var(--muted-foreground);">Vuelos Totales</div><h3>${booster.flights}</h3></div>

@@ -33,6 +33,7 @@ async function loadData() {
       boostersData.push({
         id: doc.id,
         name: data.name,
+        desc: data.desc || "",
         block: data.block,
         status: data.status,
         type: data.type,
@@ -164,8 +165,7 @@ function createBoosterCard(booster) {
         </div>
       </div>
       <div class="admin-booster-info">
-        <p><strong>ID:</strong> ${booster.id}</p>
-        <p><strong>Nombre:</strong> ${booster.name}</p>
+        <p><strong>Descripción:</strong> ${booster.desc || "Sin datos"}</p>
         <p><strong>Tipo:</strong> ${booster.type}</p>
         <p><strong>Block:</strong> ${booster.block || "N/A"}</p> <!-- ← Block agregado -->
         <p><strong>Estado:</strong> <span class="status-badge status-${statusClass}">${booster.status}</span></p>
@@ -225,8 +225,9 @@ window.editBooster = (boosterId) => {
 
   document.getElementById("modalTitle").textContent = "Editar Propulsor"
   document.getElementById("boosterId").value = booster.id
-  document.getElementById("boosterName").value = booster.name
-  document.getElementById("boosterType").value = booster.type
+  document.getElementById("boosterName").value = booster.id
+  document.getElementById("boosterDesc").value = booster.desc
+  document.getElementById("boosterType").value = booster.type || ""
   document.getElementById("boosterBlock").value = booster.block || ""   // ← Block agregado
   document.getElementById("boosterStatus").value = booster.status
   document.getElementById("boosterImage").value = booster.image
@@ -256,7 +257,8 @@ document.getElementById("boosterForm").addEventListener("submit", async (e) => {
   const boosterData = {
     name: document.getElementById("boosterName").value,
     type: document.getElementById("boosterType").value,
-    block: document.getElementById("boosterBlock").value.replace(/\D/g, ""), // <- Solo números
+    desc: document.getElementById("boosterDesc").value,
+    block: document.getElementById("boosterBlock").value.replace(/\D/g, '') || "",
     status: document.getElementById("boosterStatus").value,
     image: document.getElementById("boosterImage").value,
     missions: [],
@@ -296,24 +298,22 @@ window.addMission = (boosterId) => {
 }
 
 // Editar misión
-window.editMission = (boosterId, missionIndex) => {
-  currentBoosterId = boosterId
-  editingMissionIndex = missionIndex
-
+window.editBooster = (boosterId) => {
+  editingBoosterId = boosterId
   const booster = boostersData.find((b) => b.id === boosterId)
-  const mission = booster.missions[missionIndex]
 
-  document.getElementById("missionModalTitle").textContent = "Editar Misión"
-  document.getElementById("missionName").value = mission.name
-  document.getElementById("missionDate").value = mission.date
-  document.getElementById("missionSuccess").value = mission.success === null ? "null" : mission.success.toString()
-  document.getElementById("missionLanding").value = mission.landing || ""
-  document.getElementById("missionLaunchPad").value = mission.launchPad
-  document.getElementById("missionProgramado").checked = mission.programado || false
-
-  document.getElementById("missionModal").style.display = "block"
+  document.getElementById("modalTitle").textContent = "Editar Propulsor"
+  document.getElementById("boosterId").value = booster.id
+  document.getElementById("boosterName").value = booster.name  // ← CORRECTO
+  document.getElementById("boosterDesc").value = booster.desc
+  document.getElementById("boosterType").value = booster.type || ""
+  document.getElementById("boosterBlock").value = booster.block || ""
+  document.getElementById("boosterStatus").value = booster.status
+  document.getElementById("boosterImage").value = booster.image
+  document.getElementById("boosterModal").style.display = "block"
   document.body.classList.add("modal-open")
 }
+
 
 window.deleteMission = async (boosterId, missionIndex) => {
   if (confirm("¿Estás seguro de eliminar esta misión?")) {
