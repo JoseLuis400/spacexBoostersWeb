@@ -700,7 +700,7 @@ body {
 
 /* Agregando estilo para propulsores desechados */
 .landing-expendable {
-  background: #6b7280;
+  background: var(--booster-state-destroyed);
   color: #f3f4f6;
 }
 
