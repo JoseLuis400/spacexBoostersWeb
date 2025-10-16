@@ -52,7 +52,7 @@
   --booster-state-retired: #92400e;
   --booster-state-testing: #7c3aed;
   --booster-state-destroyed: #ef4444;
-  --booster-state-discarded: #6b7280;
+  --booster-state-discarded: #a72f2f;
 
   /* Agregando variables para colores de tipos de propulsores */
   --booster-type-FH: #524fee;

@@ -131,8 +131,11 @@
           <div class="form-group">
             <label for="boosterType">Tipo:</label>
             <select id="boosterType" required>
+              <option></option>
               <option value="F9">Falcon 9</option>
               <option value="FH">Falcon Heavy</option>
+              <option value="FHc">Falcon Heavy Center</option>
+              <option value="FHs">Falcon Heavy Side</option>
             </select>
           </div>
           <div class="form-group">
@@ -212,6 +215,8 @@
             <label>
               <input type="checkbox" id="missionProgramado">
               Vuelo Programado (futuro)
+              <input type="checkbox" id="missionInFlight">
+              En Vuelo
             </label>
           </div>
           <div class="form-actions">

@@ -198,6 +198,10 @@ function hasScheduledFlight(booster) {
     return booster.missions.some(m => m.programado);
 }
 
+function hasInFlight(booster) {
+    return booster.missions.some(m => m.inFlight);
+}
+
 // --------------------- RENDER ---------------------
 function createBoosterCard(booster) {
     const card = document.createElement("div");
@@ -240,13 +244,34 @@ function renderBoosters() {
     filteredBoosters.forEach(b => boostersGrid.appendChild(createBoosterCard(b)));
 }
 
+function getBoosterType(type) {
+    if (!type) return "N/A";
+  
+    const map = {
+      FH: "Falcon Heavy",
+      FHC: "Falcon Heavy Center",
+      FHS: "Falcon Heavy Side",
+      F9: "Falcon 9",
+    };
+  
+    const upper = type.toUpperCase();
+  
+    // Ordenar las claves de más largas a más cortas
+    const key = Object.keys(map)
+      .sort((a, b) => b.length - a.length)
+      .find(k => upper === k || upper.startsWith(k));
+  
+    return key ? map[key] : "Desconocido";
+  }  
+  
+
 // --------------------- MODAL ---------------------
 function openModal(booster) {
     const statusClass = `status-${booster.status.toLowerCase().replace(" ", "-")}`;
     const statusText = traducirEstado(booster.status);
 
     const typeClass = `type-${booster.type}`;
-    const typeText = booster.type === "F9" ? "Falcon 9" : booster.type?.includes("FH") ? "Falcon Heavy" : "N/A";
+    const typeText = getBoosterType(booster.type);
 
     let flightHistoryHTML = "";
     if (booster.missions.length > 0) {
@@ -259,8 +284,8 @@ function openModal(booster) {
                         <th>Vuelo #</th>
                         <th>Misión</th>
                         <th>Fecha</th>
-                        <th>Aterrizaje</th>
                         <th>Plataforma</th>
+                        <th>Aterrizaje</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -269,8 +294,8 @@ function openModal(booster) {
                             <td><strong>${i+1}</strong></td>
                             <td>${m.name}</td>
                             <td>${formatDate(m.date)}</td>
-                            <td><span class="landing-platform ${getLandingClass(m.landing)}">${m.landing || "Desechado"}</span></td>
                             <td><span class="launch-platform ${getLaunchPadClass(m.launchPad)}">${m.launchPad || ""}</span></td>
+                            <td><span class="landing-platform ${getLandingClass(m.landing)}">${m.landing || "Desechado"}</span></td>
                         </tr>`).join("")}
                 </tbody>
             </table>
@@ -291,6 +316,7 @@ function openModal(booster) {
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
             <h2 class="modal-title">${booster.name}</h2>
             ${hasScheduledFlight(booster)?'<span class="scheduled-badge">VUELO PROGRAMADO</span>':""}
+            ${hasInFlight(booster)?'<span class="scheduled-badge">EN VUELO</span>':""}
             <span class="booster-type ${typeClass}">${typeText}</span>
             <span class="booster-status ${statusClass}">${statusText}</span>
         </div>
@@ -356,8 +382,8 @@ function updateStats() {
     activeBoostersEl.textContent = activeBoosters;
     noActiveBoostersEl.textContent = noActiveBoosters;
     totalFlightsEl.textContent = totalFlights;
-    const retired = boostersData.filter((b) => b.status === "retired").length
-	const destroyed = boostersData.filter((b) => b.status === "destroyed").length
+    const retired = boostersData.filter((b) => b.status === "retired" || b.status === "Retirado").length
+	const destroyed = boostersData.filter((b) => b.status === "destroyed" || b.status === "Destruido").length
 	const discarded = boostersData.filter((b) => b.status === "discarded" || b.status === "Desechado").length
 	const testing = boostersData.filter((b) => b.status === "testing" || b.status === "En pruebas" || b.status === "Desarrollo").length
 

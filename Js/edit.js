@@ -194,11 +194,12 @@ function createBoosterCard(booster) {
 // Crear item de misión
 function createMissionItem(mission, index, boosterId) {
   const programadoBadge = mission.programado ? '<span style="color: #ffa500;">🔔 PROGRAMADO</span>' : ""
+  const inFlightBadge = mission.inFlight ? '<span style="color: #ffa500;">🚀 En vuelo</span>' : ""
 
   return `
         <div class="mission-item">
             <div class="mission-info">
-                <p><strong>${mission.name}</strong> ${programadoBadge}</p>
+                <p><strong>${mission.name}</strong> ${programadoBadge} ${inFlightBadge}</p>
                 <p>📅 ${mission.date} | 🚀 ${mission.launchPad} | 🛬 ${mission.landing || "Desechado"}</p>
             </div>
             <div class="mission-actions">
@@ -228,7 +229,7 @@ window.editBooster = (boosterId) => {
   document.getElementById("boosterName").value = booster.id
   document.getElementById("boosterDesc").value = booster.desc
   document.getElementById("boosterType").value = booster.type || ""
-  document.getElementById("boosterBlock").value = `Block${booster.block}` || ""   // ← Block agregado
+  document.getElementById("boosterBlock").value = `${booster.block}` || ""   // ← Block agregado
   document.getElementById("boosterStatus").value = booster.status
   document.getElementById("boosterImage").value = booster.image
 
@@ -298,22 +299,25 @@ window.addMission = (boosterId) => {
 }
 
 // Editar misión
-window.editBooster = (boosterId) => {
-  editingBoosterId = boosterId
-  const booster = boostersData.find((b) => b.id === boosterId)
+window.editMission = (boosterId, missionIndex) => {
+  currentBoosterId = boosterId
+  editingMissionIndex = missionIndex
 
-  document.getElementById("modalTitle").textContent = "Editar Propulsor"
-  document.getElementById("boosterId").value = booster.id
-  document.getElementById("boosterName").value = booster.name  // ← CORRECTO
-  document.getElementById("boosterDesc").value = booster.desc
-  document.getElementById("boosterType").value = booster.type || ""
-  document.getElementById("boosterBlock").value = booster.block || ""   // ← Block agregado
-  document.getElementById("boosterStatus").value = booster.status
-  document.getElementById("boosterImage").value = booster.image
-  document.getElementById("boosterModal").style.display = "block"
+  const booster = boostersData.find((b) => b.id === boosterId)
+  const mission = booster.missions[missionIndex]
+
+  document.getElementById("missionModalTitle").textContent = "Editar Misión"
+  document.getElementById("missionName").value = mission.name
+  document.getElementById("missionDate").value = mission.date
+  document.getElementById("missionSuccess").value = mission.success === null ? "null" : mission.success.toString()
+  document.getElementById("missionLanding").value = mission.landing || ""
+  document.getElementById("missionLaunchPad").value = mission.launchPad
+  document.getElementById("missionProgramado").checked = mission.programado || false
+  document.getElementById("missionInFlight").checked = mission.inFlight || false
+
+  document.getElementById("missionModal").style.display = "block"
   document.body.classList.add("modal-open")
 }
-
 
 window.deleteMission = async (boosterId, missionIndex) => {
   if (confirm("¿Estás seguro de eliminar esta misión?")) {
@@ -352,6 +356,10 @@ document.getElementById("missionForm").addEventListener("submit", async (e) => {
 
   if (document.getElementById("missionProgramado").checked) {
     missionData.programado = true
+  }
+
+  if (document.getElementById("missionInFlight").checked) {
+    missionData.inFlight = true
   }
 
   try {
