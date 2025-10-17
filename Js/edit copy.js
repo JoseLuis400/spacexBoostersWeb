@@ -3,9 +3,6 @@ import {  getFirestore,  collection,  getDocs,  doc,  setDoc,  updateDoc,  delet
 
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"; // <- Importar Auth
 
-import { getStorage, ref, uploadBytes, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js"; // <- Importar Storage
-
-
 const firebaseConfig = {
   apiKey: "AIzaSyAU8I3PbYOrd-qCSGNX3nyF6WWg0oIhAS8",
   authDomain: "spacexboosters.firebaseapp.com",
@@ -18,8 +15,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 const db = getFirestore(app)
-
-const storage = getStorage(app);
 
 let boostersData = []
 let editingBoosterId = null
@@ -257,79 +252,41 @@ window.deleteBooster = async (boosterId) => {
 }
 
 document.getElementById("boosterForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
+  e.preventDefault()
 
-  const boosterId = document.getElementById("boosterId").value.trim();
-  const boosterImageInput = document.getElementById("boosterImageFile");
-  let imagePath = document.getElementById("boosterImage").value.trim();
+  const boosterId = document.getElementById("boosterId").value
+  const boosterData = {
+    name: document.getElementById("boosterName").value,
+    type: document.getElementById("boosterType").value,
+    desc: document.getElementById("boosterDesc").value,
+    block: document.getElementById("boosterBlock").value.replace(/\D/g, '') || "",
+    status: document.getElementById("boosterStatus").value,
+    image: document.getElementById("boosterImage").value,
+    missions: [],
+  }  
 
   try {
-    // Subir imagen si hay archivo
-    if (boosterImageInput.files.length > 0) {
-      const file = boosterImageInput.files[0];
-      const extension = file.name.split('.').pop();
-      const storagePath = `img/${boosterId}.${extension}`;
-      const storageRef = ref(storage, storagePath);
-    
-      // Crear upload task con progreso
-      const uploadTask = uploadBytesResumable(storageRef, file);
-    
-      // Mostrar barra de progreso
-      const progressBar = document.getElementById("uploadProgress");
-      progressBar.style.display = "block";
-      progressBar.value = 0;
-    
-      // Escuchar eventos de progreso
-      uploadTask.on('state_changed',
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          progressBar.value = progress;
-        },
-        (error) => {
-          console.error("Error subiendo imagen:", error);
-          alert("Error al subir la imagen");
-          progressBar.style.display = "none";
-        },
-        async () => {
-          // Subida completa
-          imagePath = `img/${boosterId}.${extension}`;
-          console.log(`✅ Imagen subida correctamente a ${storagePath}`);
-          progressBar.style.display = "none";
-        }
-      );
-    
-      // Esperar a que termine antes de continuar
-      await uploadTask;
-    }    
-
-    const boosterData = {
-      name: document.getElementById("boosterName").value,
-      type: document.getElementById("boosterType").value,
-      desc: document.getElementById("boosterDesc").value,
-      block: document.getElementById("boosterBlock").value.replace(/\D/g, '') || "",
-      status: document.getElementById("boosterStatus").value,
-      image: imagePath,
-      missions: [],
-    };
-
     if (editingBoosterId) {
-      const existingBooster = boostersData.find((b) => b.id === editingBoosterId);
-      boosterData.missions = existingBooster.missions;
-      await setDoc(doc(db, "boosters", editingBoosterId), boosterData);
-      alert("Propulsor actualizado exitosamente");
+      // Actualizar propulsor existente
+      const existingBooster = boostersData.find((b) => b.id === editingBoosterId)
+      boosterData.missions = existingBooster.missions
+
+      await setDoc(doc(db, "boosters", editingBoosterId), boosterData)
+      alert("Propulsor actualizado exitosamente")
     } else {
-      await setDoc(doc(db, "boosters", boosterId), boosterData);
-      alert("Propulsor creado exitosamente");
+      // Crear nuevo propulsor
+      await setDoc(doc(db, "boosters", boosterId), boosterData)
+      alert("Propulsor creado exitosamente")
     }
 
-    document.getElementById("boosterModal").style.display = "none";
-    document.body.classList.remove("modal-open");
-    await loadData();
+    document.getElementById("boosterModal").style.display = "none"
+    document.body.classList.remove("modal-open")
+    await loadData()
   } catch (error) {
-    console.error("Error al guardar propulsor o subir imagen:", error);
-    alert("Error al guardar el propulsor o subir la imagen");
+    console.error("Error guardando propulsor:", error)
+    alert("Error al guardar el propulsor")
   }
-});
+})
 
 // Agregar misión
 window.addMission = (boosterId) => {

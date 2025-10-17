@@ -52,7 +52,7 @@
   --booster-state-retired: #92400e;
   --booster-state-testing: #7c3aed;
   --booster-state-destroyed: #ef4444;
-  --booster-state-discarded: #a72f2f;
+  --booster-state-discarded: #6b7280;;
 
   /* Agregando variables para colores de tipos de propulsores */
   --booster-type-FH: #524fee;
@@ -700,7 +700,7 @@ body {
 
 /* Agregando estilo para propulsores desechados */
 .landing-expendable {
-  background: #6b7280;;
+  background: #6b7280;
   color: #f3f4f6;
 }
 

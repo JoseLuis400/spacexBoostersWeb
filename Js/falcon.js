@@ -100,6 +100,19 @@ function getQueryParam(param) {
 
 async function getBoosterImageURL(path) {
     try {
+        // Si no hay path, usar placeholder
+        if (!path) return "placeholder.png";
+
+        // Detectar si es una URL completa (http/https)
+        // También aceptamos urls ya generadas de Firebase Storage (firebasestorage.googleapis.com)
+        const isHttpUrl = /^https?:\/\//i.test(path);
+        const isFirebaseFullUrl = /firebasestorage\.googleapis\.com/i.test(path);
+
+        if (isHttpUrl || isFirebaseFullUrl) {
+            return path;
+        }
+
+        // Si no es URL completa, asumimos que es un path en Firebase Storage
         return await getDownloadURL(ref(storage, path));
     } catch (error) {
         console.warn("No se pudo cargar la imagen:", path, error);
@@ -189,6 +202,8 @@ function setActiveFilter(filter) {
 function filterBoosters(filter) {
     if (filter === "all") filteredBoosters = [...boostersData];
     else if (filter === "discarded") filteredBoosters = boostersData.filter(b => b.status === "discarded" || b.status === "Desechado");
+    else if (filter === "retired") filteredBoosters = boostersData.filter(b => b.status === "retired" || b.status === "Retirado");
+    else if (filter === "destroyed") filteredBoosters = boostersData.filter(b => b.status === "destroyed" || b.status === "Destruido");
     else if (filter === "scheduled") filteredBoosters = boostersData.filter(hasScheduledFlight);
     else filteredBoosters = boostersData.filter(b => b.status === filter);
     renderBoosters();

@@ -157,7 +157,8 @@
             <label for="boosterImageFile">Imagen del Booster:</label>
             <input type="file" id="boosterImageFile" accept="image/*">
             <small>Si quieres reemplazar la imagen existente, sube otra.</small>
-          </div>          
+            <progress id="uploadProgress" value="0" max="100" style="width: 100%; display: none;"></progress>
+          </div>                   
           <div class="form-actions">
             <button type="submit" class="btn btn-primary">Guardar Propulsor</button>
             <button type="button" class="btn btn-secondary" id="cancelBoosterBtn">Cancelar</button>
