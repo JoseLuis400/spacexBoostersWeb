@@ -1,0 +1,67 @@
+{
+    "capsules": [
+        {
+            "id": "C101",
+            "name": null,
+            "status": "active",
+            "type": "Dragon 1",
+            "image": "img/C101.jpg",
+            "inOrbit": false,
+            "desc": "Primera capsula Dragon de SpaceX",
+            "missions": [
+                {
+                    "flightNumber": 1,
+                    "name": "COTS-1",
+                    "orbit": "LEO",
+                    "launchDate": "08/12/2010",
+                    "returnDate": null,
+                    "recovery": "Champion",
+                    "success": true
+                }
+            ]
+        },
+        {
+            "id": "C213",
+            "name": "Grace",
+            "status": "active",
+            "type": "Crew",
+            "image": "https://sxcontent9668.azureedge.us/cms-assets/assets/Axiom_4_vertical_sunset_060725_DSC_5490_6972dd1eae.jpg",
+            "inOrbit": false,
+            "desc": "Capsula mas nueva de SpaceX",
+            "missions": [
+                {
+                    "flightNumber": 1,
+                    "name": "Axiom Mission 4 (Ax-4)",
+                    "orbit": "ISS",
+                    "launchDate": "25/06/2025",
+                    "returnDate": "15/07/2025",
+                    "recovery": "Shannon",
+                    "success": true,
+                    "crew": [
+                        {
+                            "name": "Peggy Whitson",
+                            "role": "Comandante",
+                            "img": "https://sxcontent9668.azureedge.us/cms-assets/assets/AX_4_Portraits_DSC_01918_PEGGY_1536x1920_29bfacbf47.jpg"
+                        },
+                        {
+                            "name": "Shubhanshu Shukla",
+                            "role": "Comandante",
+                            "img": "https://sxcontent9668.azureedge.us/cms-assets/assets/AX_4_Portraits_DSC_01987_INDIA_1536x1920_9588cebeef.jpg"
+                        },
+                        {
+                            "name": "Sławosz Uznański-Wiśniewski",
+                            "role": "Especialista",
+                            "img": "https://sxcontent9668.azureedge.us/cms-assets/assets/AX_4_Portraits_DSC_02073_POLAND_1536x1920_84f5eeb2ad.jpg"
+                        },
+                        {
+                            "name": "Tibor Kapu",
+                            "role": "Especialista",
+                            "img": "https://sxcontent9668.azureedge.us/cms-assets/assets/AX_4_Portraits_DSC_02028_HUNGARY_1536x1920_8e200a6954.jpg"
+                        }
+                    ]
+                }
+            ]
+            
+        }
+    ]
+}
