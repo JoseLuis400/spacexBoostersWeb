@@ -706,10 +706,8 @@ body {
 
 .scheduled-flight {
   background: rgba(245, 158, 11, 0.1) !important;
-
-  tr:last-of-type {
-    height: 80px;
-  }
+  position: relative; /* Añadir esto */
+  height: 80px;
 
   &::after {
     content: "PROGRAMADO";
@@ -722,7 +720,7 @@ body {
     position: absolute;
     bottom: 0px;
     width: 16px;
-    height: 80px;
+    height: 100%; /* Cambiar de 80px a 100% */
     border-radius: 4px 0 0 4px;
     text-align: center;
     left: -16px;

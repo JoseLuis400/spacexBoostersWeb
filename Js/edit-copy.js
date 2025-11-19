@@ -1,7 +1,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"
 import {  getFirestore,  collection,  getDocs,  doc,  setDoc,  updateDoc,  deleteDoc,  getDoc,} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"
 
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"; // <- Importar Auth
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+import { getStorage, ref, uploadBytes, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyAU8I3PbYOrd-qCSGNX3nyF6WWg0oIhAS8",
@@ -15,6 +18,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 const db = getFirestore(app)
+
+const storage = getStorage(app);
 
 let boostersData = []
 let editingBoosterId = null
@@ -73,7 +78,7 @@ function getCurrentUTC() {
 
 // Función para actualizar Firebase con la fecha/hora actual
 
-const auth = getAuth(app); // <- Crear instancia de Auth
+const auth = getAuth(app);
 async function updateConfigUTC() {
   try {
     const configRef = doc(db, "data", "config");
@@ -149,11 +154,11 @@ function renderBoosters() {
 
 // Crear tarjeta de propulsor
 function createBoosterCard(booster) {
-  const card = document.createElement("div")
-  card.className = "admin-booster-card"
+  const card = document.createElement("div");
+  card.className = "admin-booster-card";
 
-  const statusClass = booster.status.toLowerCase().replace(" ", "-")
-  const vuelosRealizados = booster.missions.filter((m) => !m.programado).length
+  const statusClass = booster.status.toLowerCase().replace(" ", "-");
+  const vuelosRealizados = booster.missions.filter((m) => !m.programado).length;
 
   card.innerHTML = `
     <div class="card-content">
@@ -167,28 +172,35 @@ function createBoosterCard(booster) {
       <div class="admin-booster-info">
         <p><strong>Descripción:</strong> ${booster.desc || "Sin datos"}</p>
         <p><strong>Tipo:</strong> ${booster.type}</p>
-        <p><strong>Block:</strong> ${booster.block || "N/A"}</p> <!-- ← Block agregado -->
+        <p><strong>Block:</strong> ${booster.block || "N/A"}</p>
         <p><strong>Estado:</strong> <span class="status-badge status-${statusClass}">${booster.status}</span></p>
         <p><strong>Vuelos:</strong> ${vuelosRealizados}</p>
       </div>
       <div class="missions-list">
-        <h4>Misiones (${booster.missions.length})</h4>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <h4 style="margin: 0;">Misiones (${booster.missions.length})</h4>
+          ${booster.missions.length > 0 ? `
+            <button class="btn btn-success" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="exportFlightsToCSV('${booster.id}')">
+              📥 Exportar CSV
+            </button>
+          ` : ''}
+        </div>
         <div id="missions-${booster.id}" style="max-height: 400px; overflow-y: auto; padding-right: 0.5rem;">
           ${booster.missions.map((mission, index) => createMissionItem(mission, index, booster.id)).join("")}
         </div>
         <button class="btn add-mission-btn" onclick="addMission('${booster.id}')">+ Agregar Misión</button>
       </div>
     </div>
-  `
+  `;
 
   // Agregar clase para manejar background y blur
-  card.classList.add(booster.image ? "with-bg" : "no-bg")
+  card.classList.add(booster.image ? "with-bg" : "no-bg");
 
   if (booster.image) {
-    card.style.setProperty("--bg-image", `url('${booster.image}')`)
+    card.style.setProperty("--bg-image", `url('${booster.image}')`);
   }
 
-  return card
+  return card;
 }
 
 // Crear item de misión
@@ -229,7 +241,7 @@ window.editBooster = (boosterId) => {
   document.getElementById("boosterName").value = booster.id
   document.getElementById("boosterDesc").value = booster.desc
   document.getElementById("boosterType").value = booster.type || ""
-  document.getElementById("boosterBlock").value = `${booster.block}` || ""   // ← Block agregado
+  document.getElementById("boosterBlock").value = `${booster.block}` || ""
   document.getElementById("boosterStatus").value = booster.status
   document.getElementById("boosterImage").value = booster.image
 
@@ -252,41 +264,79 @@ window.deleteBooster = async (boosterId) => {
 }
 
 document.getElementById("boosterForm").addEventListener("submit", async (e) => {
-  e.preventDefault()
+  e.preventDefault();
 
-  const boosterId = document.getElementById("boosterId").value
-  const boosterData = {
-    name: document.getElementById("boosterName").value,
-    type: document.getElementById("boosterType").value,
-    desc: document.getElementById("boosterDesc").value,
-    block: document.getElementById("boosterBlock").value.replace(/\D/g, '') || "",
-    status: document.getElementById("boosterStatus").value,
-    image: document.getElementById("boosterImage").value,
-    missions: [],
-  }  
+  const boosterId = document.getElementById("boosterId").value.trim();
+  const boosterImageInput = document.getElementById("boosterImageFile");
+  let imagePath = document.getElementById("boosterImage").value.trim();
 
   try {
-    if (editingBoosterId) {
-      // Actualizar propulsor existente
-      const existingBooster = boostersData.find((b) => b.id === editingBoosterId)
-      boosterData.missions = existingBooster.missions
+    // Subir imagen si hay archivo
+    if (boosterImageInput.files.length > 0) {
+      const file = boosterImageInput.files[0];
+      const extension = file.name.split('.').pop();
+      const storagePath = `img/${boosterId}.${extension}`;
+      const storageRef = ref(storage, storagePath);
+    
+      // Crear upload task con progreso
+      const uploadTask = uploadBytesResumable(storageRef, file);
+    
+      // Mostrar barra de progreso
+      const progressBar = document.getElementById("uploadProgress");
+      progressBar.style.display = "block";
+      progressBar.value = 0;
+    
+      // Escuchar eventos de progreso
+      uploadTask.on('state_changed',
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          progressBar.value = progress;
+        },
+        (error) => {
+          console.error("Error subiendo imagen:", error);
+          alert("Error al subir la imagen");
+          progressBar.style.display = "none";
+        },
+        async () => {
+          // Subida completa
+          imagePath = `img/${boosterId}.${extension}`;
+          console.log(`✅ Imagen subida correctamente a ${storagePath}`);
+          progressBar.style.display = "none";
+        }
+      );
+    
+      // Esperar a que termine antes de continuar
+      await uploadTask;
+    }    
 
-      await setDoc(doc(db, "boosters", editingBoosterId), boosterData)
-      alert("Propulsor actualizado exitosamente")
+    const boosterData = {
+      name: document.getElementById("boosterName").value,
+      type: document.getElementById("boosterType").value,
+      desc: document.getElementById("boosterDesc").value,
+      block: document.getElementById("boosterBlock").value.replace(/\D/g, '') || "",
+      status: document.getElementById("boosterStatus").value,
+      image: imagePath,
+      missions: [],
+    };
+
+    if (editingBoosterId) {
+      const existingBooster = boostersData.find((b) => b.id === editingBoosterId);
+      boosterData.missions = existingBooster.missions;
+      await setDoc(doc(db, "boosters", editingBoosterId), boosterData);
+      alert("Propulsor actualizado exitosamente");
     } else {
-      // Crear nuevo propulsor
-      await setDoc(doc(db, "boosters", boosterId), boosterData)
-      alert("Propulsor creado exitosamente")
+      await setDoc(doc(db, "boosters", boosterId), boosterData);
+      alert("Propulsor creado exitosamente");
     }
 
-    document.getElementById("boosterModal").style.display = "none"
-    document.body.classList.remove("modal-open")
-    await loadData()
+    document.getElementById("boosterModal").style.display = "none";
+    document.body.classList.remove("modal-open");
+    await loadData();
   } catch (error) {
-    console.error("Error guardando propulsor:", error)
-    alert("Error al guardar el propulsor")
+    console.error("Error al guardar propulsor o subir imagen:", error);
+    alert("Error al guardar el propulsor o subir la imagen");
   }
-})
+});
 
 // Agregar misión
 window.addMission = (boosterId) => {
@@ -382,6 +432,64 @@ document.getElementById("missionForm").addEventListener("submit", async (e) => {
     alert("Error al guardar la misión")
   }
 })
+
+// Función para exportar vuelos a CSV
+window.exportFlightsToCSV = (boosterId) => {
+  const booster = boostersData.find((b) => b.id === boosterId);
+  
+  if (!booster || !booster.missions || booster.missions.length === 0) {
+    alert("Este propulsor no tiene vuelos registrados");
+    return;
+  }
+
+  // Encabezados del CSV
+  const headers = ["Misión", "Fecha", "Éxito", "Aterrizaje", "Plataforma de Lanzamiento", "Estado"];
+  
+  // Convertir datos a filas CSV
+  const rows = booster.missions.map(mission => {
+    const success = mission.success === null ? "Pendiente" : (mission.success ? "Sí" : "No");
+    const landing = mission.landing || "Desechado";
+    const estado = mission.programado ? "Programado" : (mission.inFlight ? "En Vuelo" : "Completado");
+    
+    return [
+      mission.name,
+      mission.date,
+      success,
+      landing,
+      mission.launchPad,
+      estado
+    ];
+  });
+
+  // Construir contenido CSV
+  let csvContent = headers.join(",") + "\n";
+  rows.forEach(row => {
+    // Escapar comillas y campos con comas
+    const escapedRow = row.map(field => {
+      const fieldStr = String(field);
+      if (fieldStr.includes(",") || fieldStr.includes('"') || fieldStr.includes("\n")) {
+        return `"${fieldStr.replace(/"/g, '""')}"`;
+      }
+      return fieldStr;
+    });
+    csvContent += escapedRow.join(",") + "\n";
+  });
+
+  // Crear blob y descargar
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  
+  link.setAttribute("href", url);
+  link.setAttribute("download", `${booster.name}_vuelos.csv`);
+  link.style.visibility = "hidden";
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  console.log(`✅ CSV exportado: ${booster.name}_vuelos.csv`);
+};
 
 // Cerrar modales
 document.querySelectorAll(".close").forEach((closeBtn) => {
