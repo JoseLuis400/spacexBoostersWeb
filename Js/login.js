@@ -92,12 +92,12 @@ document.getElementById("logoutBtn").addEventListener("click", logout);
 
 // Array con las URLs de las imágenes que quieres mostrar
 const backgrounds = [
-  'https://spacexboosters.netlify.app/img2/B1094.jpg',
-  'https://spacexboosters.netlify.app/img2/B1090.jpg',
-  'https://spacexboosters.netlify.app/img2/B1085.jpg',
-  'https://spacexboosters.netlify.app/img2/B1081.jpg',
-  'https://spacexboosters.netlify.app/img2/B1080.jpg',
-  'https://spacexboosters.netlify.app/img2/B1067.jpg'
+  'https://spacexboosters.netlify.app/NO%20USAR/img2/B1094.jpg',
+  'https://spacexboosters.netlify.app/NO%20USAR/img2/B1090.jpg',
+  'https://spacexboosters.netlify.app/NO%20USAR/img2/B1085.jpg',
+  'https://spacexboosters.netlify.app/NO%20USAR/img2/B1081.jpg',
+  'https://spacexboosters.netlify.app/NO%20USAR/img2/B1080.jpg',
+  'https://spacexboosters.netlify.app/NO%20USAR/img2/B1067.jpg'
 ];
 
 // Función para cambiar la imagen aleatoriamente
