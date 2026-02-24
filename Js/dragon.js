@@ -2,8 +2,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-import dragon from "../../../dragon.json" with { type: "json" };
-
 // --------------------- CONFIG ---------------------
 const firebaseConfig = {
   apiKey: "AIzaSyAU8I3PbYOrd-qCSGNX3nyF6WWg0oIhAS8",
@@ -429,5 +427,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 });
+
 
 loadConfig();
