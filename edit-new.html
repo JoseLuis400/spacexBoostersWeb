@@ -1,0 +1,1674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>SpaceX Boosters · Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0f1e;
+      --surface:   #111827;
+      --card:      #1a2235;
+      --border:    #243047;
+      --text:      #f1f5f9;
+      --muted:     #64748b;
+      --accent:    #3b82f6;
+      --green:     #22c55e;
+      --orange:    #f59e0b;
+      --red:       #ef4444;
+      --purple:    #a78bfa;
+      --gray:      #6b7280;
+      --r:         10px;
+      --r2:        14px;
+      --tap:       48px; /* minimum tap target */
+      --safe-b: env(safe-area-inset-bottom, 0px);
+    }
+
+    html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      overscroll-behavior: none;
+    }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* ════════════════════════════════════════
+       LOGIN
+    ════════════════════════════════════════ */
+    #loginSection {
+      display: none;
+      min-height: 100dvh;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background: radial-gradient(ellipse at 50% 0%, #0d1f3c 0%, var(--bg) 70%);
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 380px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem;
+    }
+
+    .login-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .login-logo-icon {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+    }
+
+    .login-logo-text { font-weight: 700; font-size: 1.05rem; }
+    .login-logo-text span { color: var(--muted); font-weight: 400; }
+
+    .login-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .login-sub { color: var(--muted); font-size: 0.875rem; margin-bottom: 1.75rem; }
+
+    .input-wrap { margin-bottom: 0.875rem; }
+
+    .input-wrap label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .input-wrap input {
+      width: 100%;
+      height: var(--tap);
+      padding: 0 1rem;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+
+    .input-wrap input:focus { outline: none; border-color: var(--accent); }
+    .input-wrap input::placeholder { color: var(--muted); }
+
+    .btn-primary {
+      width: 100%;
+      height: var(--tap);
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--r);
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 0.25rem;
+    }
+
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:hover  { background: #2563eb; }
+
+    #loginError {
+      color: var(--red);
+      font-size: 0.82rem;
+      margin-top: 0.75rem;
+      text-align: center;
+      min-height: 1.2em;
+    }
+
+    /* ════════════════════════════════════════
+       ADMIN SHELL
+    ════════════════════════════════════════ */
+    #adminSection { display: none; min-height: 100dvh; flex-direction: column; }
+
+    /* TOP BAR */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      height: 52px;
+      padding: 0 1rem;
+      gap: 0.75rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .topbar-back {
+      display: none; /* shown on mobile when drill-down */
+      width: 36px; height: 36px;
+      align-items: center; justify-content: center;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      flex-shrink: 0;
+      color: var(--text);
+    }
+
+    .topbar-title { font-weight: 700; font-size: 0.95rem; flex: 1; }
+    .topbar-title span { color: var(--muted); font-weight: 400; }
+
+    .topbar-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+    .icon-btn {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+      flex-shrink: 0;
+      color: var(--text);
+    }
+
+    .icon-btn:hover { border-color: var(--accent); }
+
+    .user-chip {
+      display: flex; align-items: center; gap: 0.4rem;
+      padding: 0 0.75rem;
+      height: 36px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.8rem;
+    }
+
+    .user-chip strong { color: var(--accent); }
+
+    /* LAYOUT: two column on wide, single column on mobile */
+    .admin-body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      height: calc(100dvh - 52px);
+    }
+
+    /* ── LIST PANE ── */
+    .list-pane {
+      width: 100%;
+      max-width: 360px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    .list-toolbar {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .search-input {
+      flex: 1;
+      height: var(--tap);
+      padding: 0 1rem;
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      transition: border-color 0.2s;
+    }
+
+    .search-input:focus { outline: none; border-color: var(--accent); }
+    .search-input::placeholder { color: var(--muted); }
+
+    .add-btn {
+      height: var(--tap);
+      padding: 0 1rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--r);
+      font-family: 'Inter', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+
+    .add-btn:hover { background: #2563eb; }
+
+    .booster-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    /* Booster list row */
+    .bli {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.8rem 0.9rem;
+      border-radius: var(--r);
+      cursor: pointer;
+      transition: background 0.15s;
+      min-height: var(--tap);
+      border: 1.5px solid transparent;
+    }
+
+    .bli:hover    { background: var(--card); }
+    .bli.selected { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.3); }
+
+    .bli-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .dot-active                   { background: var(--green); }
+    .dot-retirado, .dot-retired   { background: var(--orange); }
+    .dot-destruido,.dot-destroyed { background: var(--red); }
+    .dot-desechado,.dot-discarded { background: var(--gray); }
+    .dot-testing, .dot-desarrollo { background: var(--purple); }
+
+    .bli-info { flex: 1; min-width: 0; }
+
+    .bli-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .bli-sub {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.1rem;
+    }
+
+    .bli-arrow { color: var(--muted); font-size: 0.8rem; }
+
+    /* ── DETAIL PANE ── */
+    .detail-pane {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      color: var(--muted);
+    }
+
+    .empty-state .es-icon { font-size: 2.5rem; opacity: 0.4; }
+    .empty-state p { font-size: 0.9rem; }
+
+    /* ── SECTION CARD ── */
+    .section-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r2);
+      overflow: hidden;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.9rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-head-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+    }
+
+    .section-count {
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: var(--surface);
+      padding: 0.1rem 0.5rem;
+      border-radius: 20px;
+    }
+
+    .section-body { padding: 1rem; }
+
+    /* ── FORM FIELDS ── */
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .field-row.full { grid-template-columns: 1fr; }
+    .field-row.three { grid-template-columns: 1fr 1fr 1fr; }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .field label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .field input:not([type="checkbox"]):not([type="radio"]),
+    .field select,
+    .field textarea {
+      width: 100%;
+      min-height: 44px;
+      padding: 0 0.875rem;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+
+    .field textarea {
+      padding: 0.6rem 0.875rem;
+      resize: none;
+      height: 70px;
+      line-height: 1.5;
+    }
+
+    .field input:not([type="checkbox"]):not([type="radio"]):focus,
+    .field select:focus,
+    .field textarea:focus { outline: none; border-color: var(--accent); }
+
+    .field select option { background: var(--card); }
+
+    /* Status chips */
+    .status-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .schip {
+      height: 36px;
+      padding: 0 0.9rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .schip-active    { background: rgba(34,197,94,0.15);  color: var(--green);  border-color: var(--green); }
+    .schip-retirado  { background: rgba(245,158,11,0.15); color: var(--orange); border-color: var(--orange); }
+    .schip-destruido { background: rgba(239,68,68,0.15);  color: var(--red);    border-color: var(--red); }
+    .schip-desechado { background: rgba(107,114,128,0.15);color: var(--gray);   border-color: var(--gray); }
+    .schip-testing   { background: rgba(167,139,250,0.15);color: var(--purple); border-color: var(--purple); }
+    .schip-desarrollo{ background: rgba(167,139,250,0.15);color: var(--purple); border-color: var(--purple); }
+
+    /* ── SAVE ROW ── */
+    .save-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.9rem 1rem;
+      border-top: 1px solid var(--border);
+      background: rgba(59,130,246,0.04);
+    }
+
+    .btn-save {
+      height: 42px;
+      padding: 0 1.25rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--r);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-save:active { transform: scale(0.97); }
+    .btn-save:hover  { background: #2563eb; }
+
+    .save-msg {
+      font-size: 0.82rem;
+      color: var(--muted);
+      transition: color 0.3s;
+    }
+
+    .save-msg.ok    { color: var(--green); }
+    .save-msg.error { color: var(--red); }
+
+    /* ── IMAGE UPLOAD ── */
+    .img-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .img-pick-btn {
+      height: 42px;
+      padding: 0 1rem;
+      background: var(--surface);
+      border: 1.5px dashed var(--border);
+      border-radius: var(--r);
+      color: var(--muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+
+    .img-pick-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    progress {
+      height: 4px;
+      border-radius: 2px;
+      accent-color: var(--accent);
+      flex: 1;
+      min-width: 80px;
+    }
+
+    /* ── MISSION LIST ── */
+    .miss-list { display: flex; flex-direction: column; }
+
+    .miss-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+
+    .miss-row:last-child { border-bottom: none; }
+    .miss-row:hover { background: rgba(255,255,255,0.02); }
+    .miss-row.expanded { background: rgba(59,130,246,0.05); }
+    .miss-row.programado { background: rgba(245,158,11,0.04); }
+
+    .miss-icon { font-size: 1rem; flex-shrink: 0; width: 22px; text-align: center; }
+
+    .miss-info { flex: 1; min-width: 0; }
+
+    .miss-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .miss-meta {
+      display: flex;
+      gap: 0.4rem;
+      align-items: center;
+      margin-top: 0.2rem;
+      flex-wrap: wrap;
+    }
+
+    .miss-date { font-size: 0.73rem; color: var(--muted); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 0.45rem;
+      border-radius: 4px;
+      font-size: 0.68rem;
+      font-weight: 700;
+    }
+
+    .badge-ocisly  { background: rgba(124,58,237,0.2); color: #c4b5fd; }
+    .badge-jrti    { background: rgba(5,150,105,0.2);  color: #6ee7b7; }
+    .badge-asog    { background: rgba(30,64,175,0.2);  color: #93c5fd; }
+    .badge-lz      { background: rgba(245,158,11,0.2); color: #fcd34d; }
+    .badge-expend  { background: rgba(107,114,128,0.2);color: #9ca3af; }
+    .badge-slc40   { background: rgba(249,115,22,0.2); color: #fdba74; }
+    .badge-lc39a   { background: rgba(14,165,233,0.2); color: #7dd3fc; }
+    .badge-slc4e   { background: rgba(217,70,239,0.2); color: #f0abfc; }
+    .badge-prog    { background: rgba(245,158,11,0.2); color: #fcd34d; }
+
+    .miss-caret {
+      color: var(--muted);
+      font-size: 0.75rem;
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+
+    .miss-caret.open { transform: rotate(180deg); }
+
+    /* Mission expand form */
+    .miss-expand {
+      padding: 0.875rem 1rem;
+      background: rgba(59,130,246,0.04);
+      border-bottom: 2px solid rgba(59,130,246,0.3);
+      display: none;
+    }
+
+    .miss-expand.open { display: block; }
+
+    .miss-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+    }
+
+    .miss-form-grid .field input:not([type="checkbox"]):not([type="radio"]),
+    .miss-form-grid .field select { min-height: 42px; }
+
+    .checkrow {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      padding: 0.4rem 0;
+    }
+
+    .chk-label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.84rem;
+      cursor: pointer;
+    }
+
+    .chk-label input[type="checkbox"] {
+      width: 18px; height: 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .miss-form-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .btn-confirm {
+      height: 42px;
+      padding: 0 1.1rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--r);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-confirm:hover { background: #2563eb; }
+
+    .btn-cancel {
+      height: 42px;
+      padding: 0 1.1rem;
+      background: transparent;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r);
+      color: var(--muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .btn-cancel:hover { border-color: var(--text); color: var(--text); }
+
+    .btn-del-miss {
+      height: 42px;
+      padding: 0 0.9rem;
+      background: transparent;
+      border: 1.5px solid rgba(239,68,68,0.4);
+      border-radius: var(--r);
+      color: var(--red);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-left: auto;
+      transition: background 0.2s;
+    }
+
+    .btn-del-miss:hover { background: rgba(239,68,68,0.1); }
+
+    /* Add mission row */
+    .add-mission-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1rem;
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+
+    .add-mission-row:hover { background: rgba(59,130,246,0.06); }
+
+    /* ── DANGER ZONE ── */
+    .danger-zone {
+      border-color: rgba(239,68,68,0.25);
+    }
+
+    .btn-danger {
+      height: 42px;
+      padding: 0 1.1rem;
+      background: transparent;
+      border: 1.5px solid rgba(239,68,68,0.4);
+      border-radius: var(--r);
+      color: var(--red);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-danger:hover { background: rgba(239,68,68,0.1); }
+
+    .btn-sm-outline {
+      height: 36px;
+      padding: 0 0.875rem;
+      background: transparent;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-sm-outline:hover { border-color: var(--text); color: var(--text); }
+
+    .btn-sm-green {
+      height: 36px;
+      padding: 0 0.875rem;
+      background: transparent;
+      border: 1.5px solid rgba(34,197,94,0.4);
+      border-radius: 8px;
+      color: var(--green);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-sm-green:hover { background: rgba(34,197,94,0.08); }
+
+    /* ── CONFIRM DIALOG ── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(4px);
+      z-index: 500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .overlay.open { display: flex; }
+
+    .dialog {
+      width: 100%;
+      max-width: 340px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 1.75rem;
+      text-align: center;
+      animation: popIn 0.2s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    .dialog h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .dialog p  { font-size: 0.875rem; color: var(--muted); margin-bottom: 1.5rem; line-height: 1.5; }
+
+    .dialog-actions { display: flex; gap: 0.75rem; }
+    .dialog-actions button { flex: 1; height: 46px; border-radius: var(--r); font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; border: none; }
+    .dialog-btn-danger  { background: var(--red);    color: #fff; }
+    .dialog-btn-cancel  { background: var(--surface); color: var(--text); border: 1.5px solid var(--border) !important; }
+
+    /* ── NEW BOOSTER OVERLAY ── */
+    .nb-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(4px);
+      z-index: 400;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: var(--safe-b);
+    }
+
+    .nb-overlay.open { display: flex; }
+
+    .nb-sheet {
+      width: 100%;
+      max-width: 480px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px 20px 0 0;
+      padding: 1.5rem;
+      animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      max-height: 90dvh;
+      overflow-y: auto;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+
+    .nb-handle {
+      width: 36px; height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 0 auto 1.25rem;
+    }
+
+    .nb-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: calc(1.25rem + var(--safe-b));
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.7rem 1.25rem;
+      border-radius: 24px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      z-index: 9999;
+      white-space: nowrap;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      pointer-events: none;
+    }
+
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    #toast.ok    { border-color: var(--green);  color: var(--green); }
+    #toast.warn  { border-color: var(--orange); color: var(--orange); }
+    #toast.error { border-color: var(--red);    color: var(--red); }
+
+    /* ── MOBILE: drill-down ── */
+    @media (max-width: 680px) {
+      .list-pane {
+        max-width: 100%;
+        border-right: none;
+      }
+
+      .detail-pane {
+        display: none; /* hidden until booster selected */
+      }
+
+      /* when a booster is selected on mobile, hide list and show detail */
+      .admin-body.detail-open .list-pane  { display: none; }
+      .admin-body.detail-open .detail-pane { display: flex; flex-direction: column; }
+      .admin-body.detail-open .topbar-back { display: flex; }
+
+      .miss-form-grid { grid-template-columns: 1fr; }
+      .field-row.three { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (min-width: 681px) {
+      .topbar-back { display: none !important; }
+      .detail-pane { display: flex; flex-direction: column; }
+    }
+
+    /* ── Update bar ── */
+    .update-info {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+      padding: 0.75rem;
+    }
+
+    .update-info strong { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginSection">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">🚀</div>
+      <div class="login-logo-text">SpaceX Boosters <span>Admin</span></div>
+    </div>
+    <h1 class="login-title">Bienvenido</h1>
+    <p class="login-sub">Inicia sesión para continuar</p>
+    <div class="input-wrap">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="correo@ejemplo.com" autocomplete="email">
+    </div>
+    <div class="input-wrap">
+      <label>Contraseña</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" id="loginBtn">Iniciar sesión</button>
+    <div id="loginError"></div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="adminSection">
+  <nav class="topbar">
+    <button class="topbar-back" id="backBtn">‹</button>
+    <div class="topbar-title" id="topbarTitle">SpaceX Boosters <span>· Admin</span></div>
+    <div class="topbar-actions">
+      <div class="user-chip" id="userChip"><strong id="userDisplayName">—</strong></div>
+      <button class="icon-btn" id="updateTimeBtn" title="Actualizar tiempo">🕒</button>
+      <button class="icon-btn" id="logoutBtn" title="Cerrar sesión">⏏</button>
+    </div>
+  </nav>
+
+  <div class="admin-body" id="adminBody">
+    <!-- LIST PANE -->
+    <div class="list-pane">
+      <div class="list-toolbar">
+        <input class="search-input" id="searchInput" type="search" placeholder="Buscar propulsor…">
+        <button class="add-btn" id="addBoosterBtn" title="Nuevo propulsor">＋</button>
+      </div>
+      <div class="booster-scroll" id="boosterList"></div>
+    </div>
+
+    <!-- DETAIL PANE -->
+    <div class="detail-pane" id="detailPane">
+      <div class="empty-state" id="emptyState">
+        <div class="es-icon">🚀</div>
+        <p>Selecciona un propulsor de la lista</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- CONFIRM DIALOG -->
+<div class="overlay" id="confirmOverlay">
+  <div class="dialog">
+    <h3 id="confirmTitle">¿Estás seguro?</h3>
+    <p id="confirmMsg">Esta acción no se puede deshacer.</p>
+    <div class="dialog-actions">
+      <button class="dialog-btn-danger" id="confirmYes">Eliminar</button>
+      <button class="dialog-btn-cancel" id="confirmNo">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW BOOSTER SHEET -->
+<div class="nb-overlay" id="nbOverlay">
+  <div class="nb-sheet" id="nbSheet">
+    <div class="nb-handle"></div>
+    <div class="nb-title">Nuevo propulsor</div>
+    <div class="field-row">
+      <div class="field">
+        <label>ID (ej: B1099)</label>
+        <input type="text" id="nb-id" placeholder="B1099" autocapitalize="characters">
+      </div>
+      <div class="field">
+        <label>Tipo</label>
+        <select id="nb-type">
+          <option value="">—</option>
+          <option value="F9">Falcon 9</option>
+          <option value="FH">Falcon Heavy</option>
+          <option value="FHc">FH Center</option>
+          <option value="FHs">FH Side</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row three">
+      <div class="field">
+        <label>Block</label>
+        <select id="nb-block">
+          <option>5</option><option>4</option><option>3</option><option>2</option><option>1</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Estado</label>
+        <select id="nb-status">
+          <option value="active">Activo</option>
+          <option value="Retirado">Retirado</option>
+          <option value="Destruido">Destruido</option>
+          <option value="Desechado">Desechado</option>
+          <option value="testing">En Pruebas</option>
+          <option value="desarrollo">En desarrollo</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row full">
+      <div class="field">
+        <label>Descripción (opcional)</label>
+        <textarea id="nb-desc" placeholder="Breve descripción…"></textarea>
+      </div>
+    </div>
+    <div class="field-row full" style="margin-bottom:1rem;">
+      <div class="field">
+        <label>Ruta imagen</label>
+        <input type="text" id="nb-image" placeholder="img/B1099.jpg">
+      </div>
+    </div>
+    <div style="display:flex;gap:0.6rem;">
+      <button class="btn-confirm" id="nbSaveBtn" style="flex:1;">Crear propulsor</button>
+      <button class="btn-cancel" id="nbCancelBtn" style="flex:1;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- FIREBASE + LOGIC -->
+<script type="module">
+import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut }
+                            from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, getDoc }
+                            from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytesResumable }
+                            from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+
+const cfg = {
+  apiKey:            "AIzaSyAU8I3PbYOrd-qCSGNX3nyF6WWg0oIhAS8",
+  authDomain:        "spacexboosters.firebaseapp.com",
+  projectId:         "spacexboosters",
+  storageBucket:     "spacexboosters.firebasestorage.app",
+  messagingSenderId: "347004633729",
+  appId:             "1:347004633729:web:2953672e258f6a67814380",
+};
+
+const app     = initializeApp(cfg);
+const auth    = getAuth(app);
+const db      = getFirestore(app);
+const storage = getStorage(app);
+
+/* ── state ── */
+let boosters     = [];           // array of booster objects
+let selId        = null;         // selected booster id
+let expandedIdx  = null;         // expanded mission index or 'new'
+let currentUser  = null;
+let lastUpdate   = '';
+
+/* ── utils ── */
+function toast(msg, type = 'ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = '', 2800);
+}
+
+function confirm(title, msg) {
+  return new Promise(res => {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMsg').textContent   = msg;
+    document.getElementById('confirmOverlay').classList.add('open');
+    const yes = document.getElementById('confirmYes');
+    const no  = document.getElementById('confirmNo');
+    const done = val => {
+      document.getElementById('confirmOverlay').classList.remove('open');
+      yes.onclick = null; no.onclick = null;
+      res(val);
+    };
+    yes.onclick = () => done(true);
+    no.onclick  = () => done(false);
+  });
+}
+
+function landBadge(l) {
+  if (!l) return `<span class="badge badge-expend">Expendable</span>`;
+  const u = l.toUpperCase();
+  const c = u.includes('OCISLY') ? 'ocisly'
+           : u.includes('JRTI')   ? 'jrti'
+           : u.includes('ASOG')   ? 'asog'
+           : u.includes('LZ')     ? 'lz'
+           : 'expend';
+  return `<span class="badge badge-${c}">${l}</span>`;
+}
+
+function padBadge(p) {
+  if (!p) return '';
+  const c = p === 'SLC-40' ? 'slc40' : p === 'LC-39A' ? 'lc39a' : 'slc4e';
+  return `<span class="badge badge-${c}">${p}</span>`;
+}
+
+function missionIcon(m) {
+  if (m.programado) return '🔔';
+  if (m.inFlight)   return '🚀';
+  if (m.success === null) return '⏳';
+  return m.success ? '✅' : '❌';
+}
+
+/* ── auth ── */
+onAuthStateChanged(auth, async user => {
+  currentUser = user;
+  if (user) {
+    document.getElementById('loginSection').style.display  = 'none';
+    document.getElementById('adminSection').style.display  = 'flex';
+    let name = user.email;
+    try {
+      const ud = await getDoc(doc(db, 'data', 'users'));
+      if (ud.exists()) {
+        const u = ud.data()[user.uid];
+        if (u && u.name) name = u.name;
+      }
+    } catch {}
+    document.getElementById('userDisplayName').textContent = name;
+    await loadData();
+    await loadConfig();
+  } else {
+    document.getElementById('loginSection').style.display  = 'flex';
+    document.getElementById('adminSection').style.display  = 'none';
+  }
+});
+
+document.getElementById('loginBtn').addEventListener('click', async () => {
+  const e = document.getElementById('loginEmail').value.trim();
+  const p = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = '';
+  try { await signInWithEmailAndPassword(auth, e, p); }
+  catch(err) { errEl.textContent = err.code === 'auth/invalid-credential' ? 'Credenciales incorrectas.' : err.message; }
+});
+
+document.getElementById('loginPassword').addEventListener('keydown', ev => {
+  if (ev.key === 'Enter') document.getElementById('loginBtn').click();
+});
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await signOut(auth);
+  toast('Sesión cerrada', 'warn');
+});
+
+/* ── load ── */
+async function loadData() {
+  const snap = await getDocs(collection(db, 'boosters'));
+  boosters = [];
+  snap.forEach(d => {
+    const data = d.data();
+    boosters.push({ id: d.id, name: data.name||d.id, desc: data.desc||'', block: data.block, status: data.status||'', type: data.type||'', image: data.image||'', missions: data.missions||[] });
+  });
+  boosters.sort((a, b) => parseInt(b.name.replace('B','')) - parseInt(a.name.replace('B','')));
+  renderList();
+}
+
+async function loadConfig() {
+  try {
+    const c = await getDoc(doc(db, 'data', 'config'));
+    if (c.exists()) {
+      const d = c.data();
+      lastUpdate = `${d.updateDate} · ${d.updateTime} UTC (${d.updatedBy})`;
+    }
+  } catch {}
+}
+
+/* ── list ── */
+function renderList(filter = '') {
+  const list = document.getElementById('boosterList');
+  list.innerHTML = '';
+  const items = filter ? boosters.filter(b => b.name.toLowerCase().includes(filter.toLowerCase())) : boosters;
+  items.forEach(b => {
+    const flights = b.missions.filter(m => !m.programado).length;
+    const hasScheduled = b.missions.some(m => m.programado);
+    const s = b.status.toLowerCase();
+    const div = document.createElement('div');
+    div.className = 'bli' + (b.id === selId ? ' selected' : '');
+    div.dataset.id = b.id;
+    const progBadge = hasScheduled
+      ? `<span style="font-size:0.62rem;font-weight:700;background:rgba(245,158,11,0.18);color:#f59e0b;border:1px solid rgba(245,158,11,0.4);padding:0.1rem 0.45rem;border-radius:20px;letter-spacing:0.3px;flex-shrink:0;">PROG</span>`
+      : '';
+    div.innerHTML = `
+      <div class="bli-dot dot-${s}"></div>
+      <div class="bli-info">
+        <div class="bli-name" style="display:flex;align-items:center;gap:0.4rem;">${b.name}${progBadge}</div>
+        <div class="bli-sub">${b.type || '—'} · Block ${b.block||'?'} · ${flights} vuelos</div>
+      </div>
+      <div class="bli-arrow">›</div>
+    `;
+    div.addEventListener('click', () => selectBooster(b.id));
+    list.appendChild(div);
+  });
+}
+
+document.getElementById('searchInput').addEventListener('input', e => renderList(e.target.value));
+
+/* ── select booster ── */
+function selectBooster(id) {
+  selId = id;
+  expandedIdx = null;
+  renderList(document.getElementById('searchInput').value);
+  renderDetail();
+
+  // mobile drill-down
+  document.getElementById('adminBody').classList.add('detail-open');
+  const b = boosters.find(x => x.id === id);
+  document.getElementById('topbarTitle').innerHTML = `<span>${b ? b.name : 'Detalle'}</span>`;
+}
+
+document.getElementById('backBtn').addEventListener('click', () => {
+  selId = null;
+  document.getElementById('adminBody').classList.remove('detail-open');
+  document.getElementById('topbarTitle').innerHTML = 'SpaceX Boosters <span>· Admin</span>';
+  renderList(document.getElementById('searchInput').value);
+});
+
+/* ── detail ── */
+function renderDetail() {
+  const pane = document.getElementById('detailPane');
+  const b = boosters.find(x => x.id === selId);
+  if (!b) { pane.innerHTML = document.getElementById('emptyState').outerHTML; return; }
+
+  const statusOpts = [
+    ['active','Activo'],['Retirado','Retirado'],['Destruido','Destruido'],
+    ['Desechado','Desechado'],['testing','En Pruebas'],['desarrollo','En desarrollo']
+  ];
+  const sc = b.status.toLowerCase();
+
+  pane.innerHTML = `
+    <!-- INFO CARD -->
+    <div class="section-card">
+      <div class="section-head">
+        <div class="section-head-left">
+          <span class="section-title">Propulsor</span>
+        </div>
+      </div>
+      <div class="section-body">
+        <!-- Status chips -->
+        <div class="field" style="margin-bottom:0.875rem;">
+          <label>Estado</label>
+          <div class="status-chips" id="statusChips">
+            ${statusOpts.map(([v,l]) => `
+              <button class="schip ${v===b.status||sc===v.toLowerCase()?`schip-${v.toLowerCase()}`:''}
+              " data-val="${v}">${l}</button>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>ID / Nombre</label>
+            <input type="text" id="edit-name" value="${b.name}">
+          </div>
+          <div class="field">
+            <label>Tipo</label>
+            <select id="edit-type">
+              <option value="">—</option>
+              <option value="F9"  ${b.type==='F9' ?'selected':''}>Falcon 9</option>
+              <option value="FH"  ${b.type==='FH' ?'selected':''}>Falcon Heavy</option>
+              <option value="FHc" ${b.type==='FHc'?'selected':''}>FH Center</option>
+              <option value="FHs" ${b.type==='FHs'?'selected':''}>FH Side</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Block</label>
+            <select id="edit-block">
+              ${[5,4,3,2,1].map(n=>`<option ${String(b.block)===String(n)?'selected':''}>${n}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field">
+            <label>Ruta imagen</label>
+            <input type="text" id="edit-image" value="${b.image}">
+          </div>
+        </div>
+
+        <div class="field-row full">
+          <div class="field">
+            <label>Descripción</label>
+            <textarea id="edit-desc">${b.desc}</textarea>
+          </div>
+        </div>
+
+        <!-- Image upload -->
+        <div class="field">
+          <label>Subir imagen</label>
+          <div class="img-row">
+            <label class="img-pick-btn" for="edit-img-file">📁 Elegir archivo</label>
+            <input type="file" id="edit-img-file" accept="image/*" style="display:none;">
+            <progress id="edit-progress" value="0" max="100" style="display:none;"></progress>
+            <span id="edit-img-status" style="font-size:0.78rem;color:var(--muted);"></span>
+          </div>
+        </div>
+      </div>
+      <div class="save-row">
+        <button class="btn-save" id="saveBoosterBtn">Guardar</button>
+        <span class="save-msg" id="boosterSaveMsg"></span>
+      </div>
+    </div>
+
+    <!-- MISSIONS CARD -->
+    <div class="section-card">
+      <div class="section-head">
+        <div class="section-head-left">
+          <span class="section-title">Misiones</span>
+          <span class="section-count" id="missCount">${b.missions.length}</span>
+        </div>
+        <div style="display:flex;gap:0.5rem;">
+          ${b.missions.length ? `<button class="btn-sm-green" id="exportCsvBtn">📥 CSV</button>` : ''}
+        </div>
+      </div>
+      <div class="miss-list" id="missList"></div>
+      <div class="add-mission-row" id="addMissionBtn">
+        <span>＋</span> Agregar misión
+      </div>
+    </div>
+
+    <!-- DANGER ZONE -->
+    <div class="section-card danger-zone">
+      <div class="section-head">
+        <span class="section-title" style="color:rgba(239,68,68,0.7);">Zona peligrosa</span>
+      </div>
+      <div class="section-body" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;">
+        <span style="font-size:0.85rem;color:var(--muted);">Eliminar ${b.name} y todas sus misiones</span>
+        <button class="btn-danger" id="deleteBoosterBtn">🗑 Eliminar propulsor</button>
+      </div>
+    </div>
+
+    <!-- Update info -->
+    <div class="update-info">
+      Última actualización: <strong id="lastUpdateDetail">${lastUpdate || '—'}</strong>
+    </div>
+  `;
+
+  // ── status chip logic ──
+  let selectedStatus = b.status;
+  document.querySelectorAll('.schip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.schip').forEach(c => {
+        c.className = 'schip';
+      });
+      const v = chip.dataset.val;
+      chip.className = `schip schip-${v.toLowerCase()}`;
+      selectedStatus = v;
+    });
+  });
+
+  // ── save booster ──
+  document.getElementById('saveBoosterBtn').addEventListener('click', async () => {
+    const msg = document.getElementById('boosterSaveMsg');
+    msg.textContent = 'Guardando…'; msg.className = 'save-msg';
+
+    let imagePath = document.getElementById('edit-image').value.trim();
+    const fileInput = document.getElementById('edit-img-file');
+    if (fileInput.files.length > 0) {
+      const file = fileInput.files[0];
+      const ext  = file.name.split('.').pop();
+      const path = `img/${b.id}.${ext}`;
+      const prog = document.getElementById('edit-progress');
+      prog.style.display = 'block';
+      const task = uploadBytesResumable(ref(storage, path), file);
+      await new Promise((res, rej) => {
+        task.on('state_changed',
+          s => prog.value = (s.bytesTransferred / s.totalBytes) * 100,
+          rej,
+          () => { imagePath = path; res(); }
+        );
+      });
+      prog.style.display = 'none';
+      document.getElementById('edit-image').value = imagePath;
+      document.getElementById('edit-img-status').textContent = '✓ Subida';
+    }
+
+    const updated = {
+      name: document.getElementById('edit-name').value.trim(),
+      type: document.getElementById('edit-type').value,
+      block: document.getElementById('edit-block').value,
+      status: selectedStatus,
+      desc: document.getElementById('edit-desc').value.trim(),
+      image: imagePath,
+      missions: b.missions,
+    };
+
+    try {
+      await setDoc(doc(db, 'boosters', b.id), updated);
+      Object.assign(b, updated);
+      msg.textContent = '✓ Guardado'; msg.className = 'save-msg ok';
+      toast('Propulsor actualizado', 'ok');
+      renderList(document.getElementById('searchInput').value);
+    } catch(e) {
+      msg.textContent = '✗ Error'; msg.className = 'save-msg error';
+      toast('Error: ' + e.message, 'error');
+    }
+  });
+
+  // ── delete booster ──
+  document.getElementById('deleteBoosterBtn').addEventListener('click', async () => {
+    const ok = await confirm('Eliminar propulsor', `¿Eliminar ${b.name}? Esto borrará ${b.missions.length} misiones permanentemente.`);
+    if (!ok) return;
+    try {
+      await deleteDoc(doc(db, 'boosters', b.id));
+      boosters = boosters.filter(x => x.id !== b.id);
+      selId = null;
+      renderList();
+      document.getElementById('detailPane').innerHTML = '<div class="empty-state"><div class="es-icon">🚀</div><p>Selecciona un propulsor de la lista</p></div>';
+      document.getElementById('adminBody').classList.remove('detail-open');
+      document.getElementById('topbarTitle').innerHTML = 'SpaceX Boosters <span>· Admin</span>';
+      toast('Propulsor eliminado', 'warn');
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  });
+
+  // ── add mission ──
+  document.getElementById('addMissionBtn').addEventListener('click', () => {
+    expandedIdx = 'new';
+    renderMissions();
+    setTimeout(() => {
+      const last = document.getElementById('missList').lastElementChild;
+      last?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+  });
+
+  // ── export csv ──
+  document.getElementById('exportCsvBtn')?.addEventListener('click', () => exportCSV(b));
+
+  renderMissions();
+}
+
+/* ── missions ── */
+function renderMissions() {
+  const b = boosters.find(x => x.id === selId);
+  if (!b) return;
+  const list = document.getElementById('missList');
+  if (!list) return;
+  list.innerHTML = '';
+  document.getElementById('missCount').textContent = b.missions.length;
+
+  b.missions.forEach((m, idx) => {
+    // row
+    const row = document.createElement('div');
+    row.className = `miss-row${m.programado?' programado':''}${expandedIdx===idx?' expanded':''}`;
+    row.innerHTML = `
+      <div class="miss-icon">${missionIcon(m)}</div>
+      <div class="miss-info">
+        <div class="miss-name">${m.name}</div>
+        <div class="miss-meta">
+          <span class="miss-date">${m.date||'—'}</span>
+          ${padBadge(m.launchPad)}
+          ${landBadge(m.landing)}
+          ${m.programado?'<span class="badge badge-prog">PROG</span>':''}
+        </div>
+      </div>
+      <div class="miss-caret ${expandedIdx===idx?'open':''}">▼</div>
+    `;
+    row.addEventListener('click', () => {
+      expandedIdx = expandedIdx === idx ? null : idx;
+      renderMissions();
+    });
+    list.appendChild(row);
+
+    // expand form
+    const expand = document.createElement('div');
+    expand.className = `miss-expand${expandedIdx===idx?' open':''}`;
+    expand.addEventListener('click', e => e.stopPropagation());
+    list.appendChild(expand); // append FIRST so element is in DOM
+    buildMissionFormInto(expand, m); // THEN build — .checked needs element in DOM
+
+    if (expandedIdx === idx) {
+      expand.querySelector('.mf-save').addEventListener('click', () => saveMission(b, idx, expand));
+      expand.querySelector('.mf-cancel').addEventListener('click', () => { expandedIdx = null; renderMissions(); });
+      expand.querySelector('.mf-del').addEventListener('click', () => deleteMission(b, idx));
+    }
+  });
+
+  // new mission form
+  if (expandedIdx === 'new') {
+    const newRow = document.createElement('div');
+    newRow.className = 'miss-row';
+    newRow.innerHTML = `<div class="miss-icon">✏️</div><div class="miss-info"><div class="miss-name">Nueva misión</div></div>`;
+    list.appendChild(newRow);
+
+    const expand = document.createElement('div');
+    expand.className = 'miss-expand open';
+    expand.addEventListener('click', e => e.stopPropagation());
+    list.appendChild(expand); // append FIRST
+    buildMissionFormInto(expand, null); // THEN build
+
+    expand.querySelector('.mf-save').addEventListener('click', () => saveMission(b, 'new', expand));
+    expand.querySelector('.mf-cancel').addEventListener('click', () => { expandedIdx = null; renderMissions(); });
+    expand.querySelector('.mf-del').style.display = 'none';
+  }
+}
+
+function buildMissionFormInto(container, m) {
+  const v = (sel, val) => sel === val ? 'selected' : '';
+  container.innerHTML = `
+    <div class="miss-form-grid">
+      <div class="field" style="grid-column:1/-1;">
+        <label>Nombre de la misión</label>
+        <input type="text" class="mf-name" value="${m?.name||''}" placeholder="Starlink 7-8">
+      </div>
+      <div class="field">
+        <label>Fecha</label>
+        <input type="date" class="mf-date" value="${m?.date||''}">
+      </div>
+      <div class="field">
+        <label>Lanzadera</label>
+        <select class="mf-pad">
+          <option value="SLC-40" ${v(m?.launchPad,'SLC-40')}>SLC-40</option>
+          <option value="LC-39A" ${v(m?.launchPad,'LC-39A')}>LC-39A</option>
+          <option value="SLC-4E" ${v(m?.launchPad,'SLC-4E')}>SLC-4E</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Aterrizaje</label>
+        <select class="mf-land">
+          <option value=""      ${!m?.landing?'selected':''}>Expendable</option>
+          <option value="OCISLY" ${v(m?.landing,'OCISLY')}>OCISLY</option>
+          <option value="JRTI"   ${v(m?.landing,'JRTI')}>JRTI</option>
+          <option value="ASOG"   ${v(m?.landing,'ASOG')}>ASOG</option>
+          <option value="LZ-1"   ${v(m?.landing,'LZ-1')}>LZ-1</option>
+          <option value="LZ-2"   ${v(m?.landing,'LZ-2')}>LZ-2</option>
+          <option value="LZ-4"   ${v(m?.landing,'LZ-4')}>LZ-4</option>
+          <option value="LZ-40"  ${v(m?.landing,'LZ-40')}>LZ-40</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Resultado</label>
+        <select class="mf-success">
+          <option value="null"  ${m?.success===null||m?.success===undefined?'selected':''}>Pendiente</option>
+          <option value="true"  ${m?.success===true?'selected':''}>Éxito</option>
+          <option value="false" ${m?.success===false?'selected':''}>Fallo</option>
+        </select>
+      </div>
+      <div class="field" style="justify-content:flex-end;">
+        <label>Flags</label>
+        <div class="checkrow">
+          <label class="chk-label">
+            <input type="checkbox" class="mf-prog"> Programado
+          </label>
+          <label class="chk-label">
+            <input type="checkbox" class="mf-flight"> En vuelo
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="miss-form-actions">
+      <button class="btn-confirm mf-save">Guardar</button>
+      <button class="btn-cancel mf-cancel">Cancelar</button>
+      <button class="btn-del-miss mf-del">🗑 Eliminar</button>
+    </div>
+  `;
+  // Set .checked as DOM property AFTER innerHTML — only reliable method
+  container.querySelector('.mf-prog').checked   = m?.programado === true;
+  container.querySelector('.mf-flight').checked = m?.inFlight   === true;
+}
+
+async function saveMission(b, idx, expand) {
+  const name = expand.querySelector('.mf-name').value.trim();
+  if (!name) { toast('El nombre es obligatorio', 'error'); return; }
+  const sv = expand.querySelector('.mf-success').value;
+  const lv = expand.querySelector('.mf-land').value;
+  const data = {
+    name,
+    date:      expand.querySelector('.mf-date').value,
+    launchPad: expand.querySelector('.mf-pad').value,
+    landing:   lv === '' ? null : lv,
+    success:   sv === 'null' ? null : sv === 'true',
+  };
+  if (expand.querySelector('.mf-prog').checked)   data.programado = true;
+  if (expand.querySelector('.mf-flight').checked) data.inFlight   = true;
+
+  if (idx === 'new') b.missions.push(data);
+  else               b.missions[idx] = data;
+
+  try {
+    await updateDoc(doc(db, 'boosters', b.id), { missions: b.missions });
+    expandedIdx = null;
+    renderMissions();
+    toast(idx === 'new' ? 'Misión agregada' : 'Misión guardada', 'ok');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+async function deleteMission(b, idx) {
+  const ok = await confirm('Eliminar misión', `¿Eliminar "${b.missions[idx].name}"?`);
+  if (!ok) return;
+  b.missions.splice(idx, 1);
+  try {
+    await updateDoc(doc(db, 'boosters', b.id), { missions: b.missions });
+    expandedIdx = null;
+    renderMissions();
+    toast('Misión eliminada', 'warn');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+/* ── new booster ── */
+document.getElementById('addBoosterBtn').addEventListener('click', () => {
+  document.getElementById('nbOverlay').classList.add('open');
+});
+document.getElementById('nbCancelBtn').addEventListener('click', () => {
+  document.getElementById('nbOverlay').classList.remove('open');
+});
+document.getElementById('nbOverlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) document.getElementById('nbOverlay').classList.remove('open');
+});
+document.getElementById('nbSaveBtn').addEventListener('click', async () => {
+  const id = document.getElementById('nb-id').value.trim().toUpperCase();
+  if (!id) { toast('El ID es obligatorio', 'error'); return; }
+  const data = {
+    name:     id,
+    type:     document.getElementById('nb-type').value,
+    block:    document.getElementById('nb-block').value,
+    status:   document.getElementById('nb-status').value,
+    desc:     document.getElementById('nb-desc').value.trim(),
+    image:    document.getElementById('nb-image').value.trim(),
+    missions: [],
+  };
+  try {
+    await setDoc(doc(db, 'boosters', id), data);
+    boosters.unshift({ id, ...data });
+    document.getElementById('nbOverlay').classList.remove('open');
+    // clear form
+    ['nb-id','nb-desc','nb-image'].forEach(i => document.getElementById(i).value = '');
+    renderList();
+    selectBooster(id);
+    toast(`${id} creado`, 'ok');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+});
+
+/* ── update time ── */
+document.getElementById('updateTimeBtn').addEventListener('click', async () => {
+  const now = new Date();
+  const p = n => String(n).padStart(2,'0');
+  const updateDate = `${p(now.getUTCDate())}/${p(now.getUTCMonth()+1)}/${now.getUTCFullYear()}`;
+  const updateTime = `${p(now.getUTCHours())}:${p(now.getUTCMinutes())}`;
+  let updatedBy = document.getElementById('userDisplayName').textContent || 'Desconocido';
+  try {
+    await updateDoc(doc(db, 'data', 'config'), { updateDate, updateTime, updatedBy });
+    lastUpdate = `${updateDate} · ${updateTime} UTC (${updatedBy})`;
+    const el = document.getElementById('lastUpdateDetail');
+    if (el) el.textContent = lastUpdate;
+    toast('Tiempo actualizado', 'ok');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+});
+
+/* ── export CSV ── */
+function exportCSV(b) {
+  const done = b.missions.filter(m => !m.programado)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  if (!done.length) { toast('Sin misiones completadas', 'warn'); return; }
+  const fmt = d => { if (!d) return ''; const p = d.split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:d; };
+  let csv = '\uFEFF';
+  done.forEach((m, i) => csv += `${i+1};${m.name};${fmt(m.date)};${m.launchPad||''};${m.landing||'Expendable'}\n`);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+  a.download = `${b.name}_misiones.csv`;
+  a.click();
+  toast('CSV exportado', 'ok');
+}
+</script>
+</body>
+</html>
