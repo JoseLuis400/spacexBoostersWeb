@@ -297,7 +297,7 @@ function openModal(booster) {
                         <article class="mission">
                             <h4>Vuelo ${i + 1}</h4>
                             <p><strong>Misión:</strong> ${m.name}</p>
-                            <p><strong>Fecha:</strong> ${m.docking}</p>
+                            <p><strong>Fecha:</strong> ${formatoFechaUTC(m.docking)}</p>
                             <p><strong>Docking Port:</strong> <span class="landing-platform ${getLandingClass(m.landing)}">${m.landing || "Desechado"}</span></p>
                             <ul class="crew">
                                 ${m.crew?.map(member => `<li>
@@ -348,6 +348,24 @@ function openModal(booster) {
   const url = new URL(window.location);
   url.searchParams.set("id", booster.id);
   window.history.pushState({}, "", url);
+}
+
+ // --------------------- UTILS ---------------------
+function formatoFechaUTC(timestamp) {
+  if (!timestamp) return '';
+
+  const fecha = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+
+  return fecha.toLocaleString('es-ES', {
+    timeZone: 'UTC',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
 }
 
 function closeModal() {
