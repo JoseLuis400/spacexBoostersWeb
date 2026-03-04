@@ -411,7 +411,7 @@ body {
 .booster-name {
   font-size: 1.5rem;
   font-weight: 700;
-  flex: 1 0 30%;
+  flex: 1 0 50%;
   line-height: 1.3;
   text-wrap: nowrap;
   height: 32px;
@@ -613,6 +613,7 @@ div.flight-history {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
+  gap: 8px;
 
   h3 {
     font-size: 1.5rem;
@@ -741,39 +742,33 @@ div.flight-history {
 
 .landing-platform,
 .launch-platform {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  height: 32px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 16px;
   font-weight: 600;
   background: var(--muted);
   color: var(--muted-foreground);
+  text-transform: capitalize;
 }
 
-.landing-asog {
+.docking-zenith {
   background: #1e40af;
   color: #dbeafe;
 }
 
-.landing-jrti {
-  background: #059669;
-  color: #d1fae5;
-}
-
-.landing-ocisly {
-  background: #7c3aed;
-  color: #e9d5ff;
-}
-
-.landing-lz {
-  background: #f59e0b;
-  color: #fff7ed;
+.docking-forward {
+  background: #6156c9;
+  color: #dbeafe;
 }
 
 /* Agregando estilo para propulsores desechados */
-.landing-expendable {
+.docking-expendable {
   background: #6b7280;
-  ;
   color: #f3f4f6;
 }
 
