@@ -2,6 +2,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
+import dragon from "../../../dragon.json" with { type: "json" };
+
 // --------------------- CONFIG ---------------------
 const firebaseConfig = {
   apiKey: "AIzaSyAU8I3PbYOrd-qCSGNX3nyF6WWg0oIhAS8",
@@ -62,19 +64,17 @@ function traducirEstado(estado) {
     retired: "Retirado",
     destroyed: "Destruido",
     testing: "En Pruebas",
+    orbit: "En órbita",
     unknown: "Desconocido",
     discarded: "Desechado",
   };
   return estados[estado.toLowerCase()] || estado;
 }
 
-function getLandingClass(landing) {
+function getDockingPortClass(landing) {
   if (!landing || landing === null) return "landing-expendable";
-  if (landing === "Desechado") return "landing-expendable";
-  if (landing.includes("ASOG")) return "landing-asog";
-  if (landing.includes("JRTI")) return "landing-jrti";
-  if (landing.includes("OCISLY")) return "landing-ocisly";
-  if (landing.includes("LZ-")) return "landing-lz";
+  if (landing.includes("zenith")) return "docking-zenith";
+  if (landing.includes("forward")) return "docking-forward";
   return "";
 }
 
@@ -230,10 +230,14 @@ function createBoosterCard(booster) {
   const typeClass = `type-${booster.type}`;
   const typeText = booster.type === "F9" ? "Falcon 9" : booster.type?.includes("FH") ? "Falcon Heavy" : "N/A";
 
-  const lastFlightText = booster.lastFlight ? `Último vuelo: ${booster.missions[booster.missions.length - 1].undocking}` : "Sin vuelos realizados";
+  const lastFlightText = booster.lastFlight ? `Última misión: ${booster.missions[booster.missions.length - 1].undocking}` : "Sin misiones realizadas";
 
   card.innerHTML = `
-        <span class="block">${booster.type || "N/A"}</span>
+        <span class="block">${{
+      'cargo_v1': 'Cargo 1',
+      'cargo_v2': 'Cargo 2',
+      'crew': 'Crew',
+    }[booster.type] || "N/A"}</span>
         <div class="booster-image">
             <img src="${booster.image}" alt="${booster.name}" loading="lazy" 
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -241,9 +245,8 @@ function createBoosterCard(booster) {
         </div>
         <div class="booster-content">
             <h3 class="booster-name">${booster.id}${booster.name ? ` - ${booster.name}` : ""}</h3>
-            <span class="booster-type ${typeClass}">${typeText}</span>
             <span class="booster-status ${statusClass}">${statusText}</span>
-            <p class="booster-flights">Vuelos realizados: ${booster.flights}</p>
+            <p class="booster-flights">Misiones realizadas: ${booster.flights}</p>
             <p class="booster-first-flight">${lastFlightText}</p>
         </div>
     `;
@@ -295,13 +298,13 @@ function openModal(booster) {
             <h3>Historial de Misiones</h3>
                 ${booster.missions.map((m, i) => `
                         <article class="mission">
-                            <h4>Vuelo ${i + 1}</h4>
+                            <h4>Vuelo ${booster.missions.length - i}</h4>
                             <p><strong>Misión:</strong> ${m.name}</p>
-                            <p><strong>Fecha:</strong> ${formatoFechaUTC(m.docking)}</p>
-                            <p><strong>Docking Port:</strong> <span class="landing-platform ${getLandingClass(m.landing)}">${m.landing || "Desechado"}</span></p>
+                            <p><strong>Fecha:</strong> ${formatoFechaUTC(m.docking.date)}</p>
+                            <p><strong>Docking Port:</strong> <span class="landing-platform ${getDockingPortClass(m.docking.port)}">${m.docking.port || "Desechado"}</span></p>
                             <ul class="crew">
                                 ${m.crew?.map(member => `<li>
-                                  <img src="${member.img}" alt="${member.name}" loading="lazy" 
+                                  <img src="${member.image}" alt="${member.name}" loading="lazy" 
                                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">  
                                   <h5>${member.name}</h5>
                                   <span class="role">${member.role}</span>
@@ -326,7 +329,7 @@ function openModal(booster) {
         <div class="modal-header">
             <img src="${booster.image}" alt="${booster.name}" class="modal-image" loading="lazy" 
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <h2 class="modal-title">${booster.name}</h2>
+            <h2 class="modal-title">${booster.name ?? booster.id}</h2>
             ${hasScheduledFlight(booster) ? '<span class="scheduled-badge">VUELO PROGRAMADO</span>' : ""}
             ${hasInFlight(booster) ? '<span class="scheduled-badge">EN VUELO</span>' : ""}
             <span class="booster-type ${typeClass}">${typeText}</span>
@@ -348,24 +351,25 @@ function openModal(booster) {
   const url = new URL(window.location);
   url.searchParams.set("id", booster.id);
   window.history.pushState({}, "", url);
-}
 
- // --------------------- UTILS ---------------------
-function formatoFechaUTC(timestamp) {
-  if (!timestamp) return '';
+  // --------------------- UTILS ---------------------
+  function formatoFechaUTC(timestamp) {
+    if (!timestamp) return '';
 
-  const fecha = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const fecha = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
 
-  return fecha.toLocaleString('es-ES', {
-    timeZone: 'UTC',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  });
+    return fecha.toLocaleString('es-ES', {
+      timeZone: 'UTC',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+  }
+
 }
 
 function closeModal() {
@@ -445,6 +449,5 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 });
-
 
 loadConfig();
