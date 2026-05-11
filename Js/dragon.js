@@ -158,23 +158,24 @@ function getCounterConfig(m) {
 
   // Programado y lanzamiento futuro → solo T- al lanzamiento
   if (m.programado && launch && launch > now) {
-    return { tPlus: null, tMinus: new Date(launch) };
+    return { tPlus: null, tPlusLabel: null, tMinus: new Date(launch), tMinusLabel: "LANZAMIENTO" };
   }
 
   if (!launch || launch > now) return null;
 
   const tPlus = new Date(launch);
+  const tPlusLabel = "EN MISIÓN";
 
-  if (docking && docking > now)            return { tPlus, tMinus: new Date(docking) };    // en tránsito
+  if (docking && docking > now)
+    return { tPlus, tPlusLabel, tMinus: new Date(docking), tMinusLabel: "ACOPLAMIENTO" };
   if (docking && !undocking && !splashdown) {
-    // Acoplado: T- al desacoplamiento si está planeado
     const plannedUndock = tsToDate(m.undockingPlanned)?.getTime() ?? null;
-    return { tPlus, tMinus: plannedUndock && plannedUndock > now ? new Date(plannedUndock) : null };
+    return { tPlus, tPlusLabel, tMinus: plannedUndock && plannedUndock > now ? new Date(plannedUndock) : null, tMinusLabel: "DESACOPLAMIENTO" };
   }
   if (undocking && undocking <= now && splashdown && splashdown > now)
-    return { tPlus, tMinus: new Date(splashdown) };                                         // regresando
+    return { tPlus, tPlusLabel, tMinus: new Date(splashdown), tMinusLabel: "AMERIZAJE" };
   if (undocking && undocking <= now && !splashdown)
-    return { tPlus, tMinus: null };                                                          // sin fecha de amerizaje
+    return { tPlus, tPlusLabel, tMinus: null, tMinusLabel: null };
 
   return null;
 }
@@ -283,14 +284,25 @@ function createCapsuleCard(capsule) {
 
   const counterMission = getCounterMission(capsule);
   const counterCfg = counterMission ? getCounterConfig(counterMission) : null;
-  let counterHTML = "";
+  let missionStatusHTML = "";
   if (counterCfg) {
+    const isProgramado = counterMission.programado;
     const plusId  = `cplus-${capsule.id}`;
     const minusId = `cminus-${capsule.id}`;
-    counterHTML = `
-      <div class="live-counter-wrap">
-        ${counterCfg.tPlus  ? `<span class="live-counter t-plus"  id="${plusId}">T+ …</span>` : ""}
-        ${counterCfg.tMinus ? `<span class="live-counter t-minus" id="${minusId}">T- …</span>` : ""}
+    const plusBlock  = counterCfg.tPlus  ? `
+      <div class="cms-counter-block">
+        <span class="cms-counter-label">${counterCfg.tPlusLabel}</span>
+        <span class="cms-counter t-plus" id="${plusId}">…</span>
+      </div>` : "";
+    const minusBlock = counterCfg.tMinus ? `
+      <div class="cms-counter-block">
+        <span class="cms-counter-label">${counterCfg.tMinusLabel}</span>
+        <span class="cms-counter t-minus" id="${minusId}">…</span>
+      </div>` : "";
+    missionStatusHTML = `
+      <div class="card-mission-status ${isProgramado ? "is-scheduled" : "is-active"}">
+        <div class="cms-name">${counterMission.name}</div>
+        <div class="cms-counters">${plusBlock}${minusBlock}</div>
       </div>`;
   }
 
@@ -306,8 +318,8 @@ function createCapsuleCard(capsule) {
       <span class="booster-status ${statusClass}">${statusText}</span>
       <p class="booster-flights">Misiones: ${capsule.flights}</p>
       <p class="booster-first-flight">${lastFlightText}</p>
-      ${counterHTML}
     </div>
+    ${missionStatusHTML}
   `;
 
   return card;
@@ -334,8 +346,8 @@ function startLiveCounters() {
     const cfg = getCounterConfig(mission);
     if (!cfg) return;
 
-    const plusEl  = document.getElementById(`cplus-${capsule.id}`);
-    const minusEl = document.getElementById(`cminus-${capsule.id}`);
+    const plusEl  = document.getElementById(`cplus-${capsule.id}`)  ?? null;
+    const minusEl = document.getElementById(`cminus-${capsule.id}`) ?? null;
 
     const tick = () => {
       const now = Date.now();
@@ -427,8 +439,8 @@ function buildMissionArticle(m, i, capsule) {
     const minusId = `mminus-${capsule.id}-${i}`;
     liveCountersHTML = `
       <div class="live-counter-wrap modal-counters">
-        ${cfg.tPlus  ? `<span class="live-counter t-plus"  id="${plusId}">T+ …</span>`  : ""}
-        ${cfg.tMinus ? `<span class="live-counter t-minus" id="${minusId}">T- …</span>` : ""}
+        ${cfg.tPlus  ? `<div class="live-counter t-plus"><span class="live-counter-value" id="${plusId}">…</span></div>`  : ""}
+        ${cfg.tMinus ? `<div class="live-counter t-minus"><span class="live-counter-value" id="${minusId}">…</span></div>` : ""}
       </div>`;
     setTimeout(() => {
       const plusEl  = document.getElementById(plusId);

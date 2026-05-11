@@ -282,68 +282,30 @@ body {
   flex-direction: column;
 
   &.has-scheduled-flight {
-    margin-bottom: 32px;
     border-color: #f59e0b;
 
     .booster-content {
       border-radius: 8px;
     }
 
-    &::before {
-      content: "Próximo vuelo programado";
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-transform: uppercase;
-      z-index: -1;
-      position: absolute;
-      border-radius: 0 0 16px 16px;
-      color: var(--background);
-      bottom: -32px;
-      box-sizing: border-box;
-      font-weight: 800;
-      font-size: 16px;
-      padding-top: 16px;
-      left: -1px;
-      width: calc(100% + 2px);
-      height: 48px;
-      background: linear-gradient(270deg, #f59e0b, #f97316, #f59e0b);
+    .card-mission-status {
+      border-radius: 0 0 14px 14px;
+      background: linear-gradient(270deg, #f59e0b22, #f9731622, #f59e0b22);
       background-size: 400% 400%;
       animation: gradientShift 3s ease infinite;
-      pointer-events: none;
+      border-top-color: rgba(245, 158, 11, 0.2);
     }
   }
 
   &.is-in-flight {
-    margin-bottom: 32px;
     border-color: #0ea5e9;
 
-    .booster-content {
-      border-radius: 8px;
-    }
-
-    &::before {
-      content: "En vuelo";
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-transform: uppercase;
-      z-index: -1;
-      position: absolute;
-      border-radius: 0 0 16px 16px;
-      color: #fff;
-      bottom: -32px;
-      box-sizing: border-box;
-      font-weight: 800;
-      font-size: 16px;
-      padding-top: 16px;
-      left: -1px;
-      width: calc(100% + 2px);
-      height: 48px;
-      background: linear-gradient(270deg, #0ea5e9, #06b6d4, #0ea5e9);
+    .card-mission-status {
+      border-radius: 0 0 14px 14px;
+      background: linear-gradient(270deg, #0ea5e922, #06b6d422, #0ea5e922);
       background-size: 400% 400%;
       animation: gradientShift 3s ease infinite;
-      pointer-events: none;
+      border-top-color: rgba(14, 165, 233, 0.2);
     }
   }
 
@@ -720,48 +682,115 @@ div.flight-history {
   width: fit-content;
 }
 
-/* Contador en vivo en tarjetas */
-.live-counter-wrap {
+/* ---- Sección de misión activa en tarjeta ---- */
+.card-mission-status {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0 0 14px 14px;
+  padding: 10px 14px 12px;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: 4px;
-  flex: 1 0 100%;
+}
+
+
+.cms-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cms-counters {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
   margin-top: 4px;
 }
 
-.live-counter {
-  display: inline-block;
-  font-size: 0.85rem;
+.cms-counter-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.cms-counter-label {
+  font-size: 0.6rem;
   font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.cms-counter {
+  font-family: ui-monospace, "Cascadia Code", monospace;
+  font-size: 1.15rem;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
-  padding: 4px 10px;
-  border-radius: 8px;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 12px currentColor;
+}
+
+.card-mission-status.is-active .cms-counter-block:has(.t-plus)  .cms-counter-label { color: #6ee7b7; }
+.card-mission-status.is-active .cms-counter-block:has(.t-minus) .cms-counter-label { color: #fcd34d; }
+.card-mission-status.is-active .cms-counter.t-plus  { color: #6ee7b7; }
+.card-mission-status.is-active .cms-counter.t-minus { color: #fcd34d; }
+
+.card-mission-status.is-scheduled .cms-name              { color: #fef3c7; }
+.card-mission-status.is-scheduled .cms-counter-label     { color: #fcd34d; }
+.card-mission-status.is-scheduled .cms-counter.t-minus   { color: #fcd34d; }
+
+/* ---- Contadores en vivo en el modal ---- */
+.live-counter-wrap {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0 6px;
+  flex-wrap: wrap;
+}
+
+.live-counter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 18px;
+  border-radius: 10px;
+  min-width: 150px;
+  font-variant-numeric: tabular-nums;
+}
+
+.live-counter::before {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.55;
 }
 
 .live-counter.t-plus {
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.22);
   color: #6ee7b7;
+  &::before { content: "Tiempo en misión"; }
 }
 
 .live-counter.t-minus {
-  background: rgba(245, 158, 11, 0.15);
-  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.22);
   color: #fcd34d;
+  &::before { content: "Próximo evento"; }
 }
 
-/* Badge vivo en el modal */
-.live-badge {
-  display: inline-block;
+.live-counter-value {
+  font-size: 1.2rem;
   font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  background: rgba(16, 185, 129, 0.2);
-  color: #6ee7b7;
-  border: 1px solid rgba(16, 185, 129, 0.4);
+  letter-spacing: 0.04em;
+  font-family: ui-monospace, "Cascadia Code", monospace;
 }
 
 /* Tripulación en el modal */
