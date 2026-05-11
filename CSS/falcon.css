@@ -505,6 +505,9 @@ body {
   cursor: pointer;
   z-index: 1001;
   color: var(--muted-foreground);
+  background: none;
+  border: none;
+  padding: 0;
 
   &::before,
   &::after {

@@ -254,13 +254,12 @@ body {
   color: #eef;
 }
 
-#testing-boosters-card,
-.status-en-pruebas,
-.status-desarrollo,
-.status-testing {
-  border-color: var(--booster-state-testing);
-  background: color-mix(in srgb, var(--booster-state-testing) 10%, transparent);
-  color: var(--booster-state-testing);
+#orbit-capsules-card,
+.status-orbit,
+.status-en-orbita {
+  border-color: #0ea5e9;
+  background: color-mix(in srgb, #0ea5e9 10%, transparent);
+  color: #0ea5e9;
 }
 
 /* Boosters grid */
@@ -315,6 +314,39 @@ body {
     }
   }
 
+  &.is-in-flight {
+    margin-bottom: 32px;
+    border-color: #0ea5e9;
+
+    .booster-content {
+      border-radius: 8px;
+    }
+
+    &::before {
+      content: "En vuelo";
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-transform: uppercase;
+      z-index: -1;
+      position: absolute;
+      border-radius: 0 0 16px 16px;
+      color: #fff;
+      bottom: -32px;
+      box-sizing: border-box;
+      font-weight: 800;
+      font-size: 16px;
+      padding-top: 16px;
+      left: -1px;
+      width: calc(100% + 2px);
+      height: 48px;
+      background: linear-gradient(270deg, #0ea5e9, #06b6d4, #0ea5e9);
+      background-size: 400% 400%;
+      animation: gradientShift 3s ease infinite;
+      pointer-events: none;
+    }
+  }
+
   span.block {
     position: absolute;
     top: 16px;
@@ -348,7 +380,7 @@ body {
   transform: translateY(-4px);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 
-  &:not(.has-scheduled-flight) {
+  &:not(.has-scheduled-flight):not(.is-in-flight) {
     border-color: var(--accent);
   }
 }
@@ -506,6 +538,9 @@ body {
   cursor: pointer;
   z-index: 1001;
   color: var(--muted-foreground);
+  background: none;
+  border: none;
+  padding: 0;
 
   &::before,
   &::after {
@@ -611,77 +646,170 @@ body {
 div.flight-history {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
+  align-items: stretch;
+  gap: 12px;
 
   h3 {
     font-size: 1.5rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     color: inherit;
   }
 
   article.mission {
-    --border-radius: 16px;
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-direction: column;
     padding: 16px;
     background: var(--muted);
-    border: 2px solid rgba(200 200 200 / 10%);
-    corner-shape: bevel;
+    border: 2px solid rgba(200, 200, 200, 0.1);
     border-radius: 16px;
-    gap: 16px;
+    gap: 12px;
+  }
+}
 
-    ul.crew {
-      display: flex;
-      flex-direction: row;
-      gap: 16px;
-      flex-wrap: wrap;
+.mission-article-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
 
-      li {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        justify-content: flex-start;
-        flex: 1;
-        corner-shape: bevel;
-        border-radius: 8px;
-        border: 1px solid #fff;
-        scrollbar-gutter: auto;
-        background: rgba(30, 30, 50, 0.4);
-        overflow: hidden;
+.mission-article-title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 
-        h5 {
-          font-size: 16px;
-          font-weight: 700;
-          padding: 0 16px;
-          color: #fff;
-          text-transform: uppercase;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          margin-top: 8px;
-          white-space: nowrap;
-          scrollbar-gutter: auto;
-          width: 100%;
-        }
+.mission-article-title h4 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-        span.role {
-          text-transform: uppercase;
-          font-size: 12px;
-          margin-top: 4px;
-          color: var(--muted-foreground);
-          font-weight: 600;
-          padding: 0 16px;
-          margin-bottom: 16px;
-        }
+.mission-article-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+}
 
-        img {
-          width: 100%;
-          aspect-ratio: 4 / 5;
-          mask-image: linear-gradient(black 50%, transparent);
-        }
-      }
+.mission-article-body p {
+  margin: 0;
+}
+
+.mission-patch {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+  flex-shrink: 0;
+}
+
+.dest-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+  width: fit-content;
+}
+
+/* Contador en vivo en tarjetas */
+.live-counter-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 0 100%;
+  margin-top: 4px;
+}
+
+.live-counter {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 4px 10px;
+  border-radius: 8px;
+  letter-spacing: 0.03em;
+}
+
+.live-counter.t-plus {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #6ee7b7;
+}
+
+.live-counter.t-minus {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fcd34d;
+}
+
+/* Badge vivo en el modal */
+.live-badge {
+  display: inline-block;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+/* Tripulación en el modal */
+ul.crew {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  flex-wrap: wrap;
+  list-style: none;
+  padding: 0;
+  margin-top: 8px;
+
+  li {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1;
+    min-width: 100px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(30, 30, 50, 0.4);
+    overflow: hidden;
+
+    img {
+      width: 100%;
+      aspect-ratio: 4 / 5;
+      object-fit: cover;
+      mask-image: linear-gradient(black 50%, transparent);
+    }
+
+    h5 {
+      font-size: 14px;
+      font-weight: 700;
+      padding: 6px 12px 0;
+      color: #fff;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    }
+
+    span.role {
+      text-transform: uppercase;
+      font-size: 11px;
+      color: var(--muted-foreground);
+      font-weight: 600;
+      padding: 2px 12px 12px;
     }
   }
 }

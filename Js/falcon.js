@@ -373,11 +373,15 @@ function setupEventListeners() {
 
     const searchInput = document.getElementById("search-input");
     searchInput.addEventListener("input", () => {
-        const query = searchInput.value.toLowerCase();
-        document.querySelectorAll(".booster-card").forEach(card => {
-            const name = card.querySelector(".booster-name").textContent.toLowerCase();
-            card.style.display = name.includes(query) ? "block" : "none";
-        });
+        const query = searchInput.value.toLowerCase().trim();
+        const base = currentFilter === "all" ? boostersData
+            : currentFilter === "discarded" ? boostersData.filter(b => b.status === "discarded" || b.status === "Desechado")
+            : currentFilter === "retired" ? boostersData.filter(b => b.status === "retired" || b.status === "Retirado")
+            : currentFilter === "destroyed" ? boostersData.filter(b => b.status === "destroyed" || b.status === "Destruido")
+            : currentFilter === "scheduled" ? boostersData.filter(hasScheduledFlight)
+            : boostersData.filter(b => b.status === currentFilter);
+        filteredBoosters = query ? base.filter(b => b.name.toLowerCase().includes(query)) : base;
+        renderBoosters();
     });
 
     modalClose.addEventListener("click", closeModal);
@@ -386,31 +390,37 @@ function setupEventListeners() {
 }
 
 // --------------------- ESTADÍSTICAS ---------------------
+function animateCounter(el, target, duration = 800) {
+    const start = performance.now();
+    const update = (now) => {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.round(eased * target);
+        if (progress < 1) requestAnimationFrame(update);
+    };
+    requestAnimationFrame(update);
+}
+
 function updateStats() {
     const totalBoosters = boostersData.length;
     const activeBoosters = boostersData.filter(b => b.status === "active").length;
     const noActiveBoosters = totalBoosters - activeBoosters;
     let totalFlights = 0;
     boostersData.forEach(b => totalFlights += b.flights);
+    const retired = boostersData.filter(b => b.status === "retired" || b.status === "Retirado").length;
+    const destroyed = boostersData.filter(b => b.status === "destroyed" || b.status === "Destruido").length;
+    const discarded = boostersData.filter(b => b.status === "discarded" || b.status === "Desechado").length;
+    const testing = boostersData.filter(b => b.status === "testing" || b.status === "En pruebas" || b.status === "Desarrollo").length;
 
-    totalBoostersEl.textContent = totalBoosters;
-    activeBoostersEl.textContent = activeBoosters;
-    noActiveBoostersEl.textContent = noActiveBoosters;
-    totalFlightsEl.textContent = totalFlights;
-    const retired = boostersData.filter((b) => b.status === "retired" || b.status === "Retirado").length
-	const destroyed = boostersData.filter((b) => b.status === "destroyed" || b.status === "Destruido").length
-	const discarded = boostersData.filter((b) => b.status === "discarded" || b.status === "Desechado").length
-	const testing = boostersData.filter((b) => b.status === "testing" || b.status === "En pruebas" || b.status === "Desarrollo").length
-
-	totalBoostersEl.textContent = totalBoosters
-	activeBoostersEl.textContent = activeBoosters
-	noActiveBoostersEl.textContent = noActiveBoosters
-
-	document.getElementById("retired-boosters").textContent = retired
-	document.getElementById("destroyed-boosters").textContent = destroyed
-	document.getElementById("discarded-boosters").textContent = discarded
-	document.getElementById("testing-boosters").textContent = testing
-	totalFlightsEl.textContent = totalFlights
+    animateCounter(totalBoostersEl, totalBoosters);
+    animateCounter(activeBoostersEl, activeBoosters);
+    animateCounter(noActiveBoostersEl, noActiveBoosters);
+    animateCounter(totalFlightsEl, totalFlights);
+    animateCounter(document.getElementById("retired-boosters"), retired);
+    animateCounter(document.getElementById("destroyed-boosters"), destroyed);
+    animateCounter(document.getElementById("discarded-boosters"), discarded);
+    animateCounter(document.getElementById("testing-boosters"), testing);
 }
 
 // --------------------- INICIALIZACIÓN ---------------------

@@ -2,9 +2,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-import dragon from "../../../dragon.json" with { type: "json" };
-
-// --------------------- CONFIG ---------------------
 const firebaseConfig = {
   apiKey: "AIzaSyAU8I3PbYOrd-qCSGNX3nyF6WWg0oIhAS8",
   authDomain: "spacexboosters.firebaseapp.com",
@@ -19,9 +16,10 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-let boostersData = [];
+let capsulesData = [];
 let currentFilter = "all";
-let filteredBoosters = [];
+let filteredCapsules = [];
+const liveCounterIntervals = [];
 
 // --------------------- DOM ---------------------
 const boostersGrid = document.getElementById("boosters-grid");
@@ -30,7 +28,6 @@ const modal = document.getElementById("booster-modal");
 const modalBody = document.getElementById("modal-body");
 const modalClose = document.querySelector(".modal-close");
 
-// Estadísticas
 const totalBoostersEl = document.getElementById("total-boosters");
 const activeBoostersEl = document.getElementById("active-boosters");
 const noActiveBoostersEl = document.getElementById("no-active");
@@ -38,20 +35,62 @@ const lastUpdateEl = document.getElementById("last-update");
 const totalFlightsEl = document.getElementById("total-flights");
 
 // --------------------- UTILIDADES ---------------------
+function tsToDate(ts) {
+  if (!ts) return null;
+  return ts.toDate ? ts.toDate() : new Date(ts);
+}
+
+function formatoFechaUTC(ts) {
+  const d = tsToDate(ts);
+  if (!d) return "—";
+  return d.toLocaleString("es-ES", {
+    timeZone: "UTC", year: "numeric", month: "2-digit",
+    day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false,
+  }) + " UTC";
+}
+
 function isFlexibleDate(dateString) {
+  if (!dateString) return true;
   return dateString.includes("NET") || dateString.length < 10;
 }
 
 function formatDate(dateString) {
-  if (isFlexibleDate(dateString)) return dateString;
+  if (!dateString || isFlexibleDate(dateString)) return dateString ?? "—";
   const [year, month, day] = dateString.split("-");
-  const date = new Date(year, month - 1, day);
-  return date.toLocaleDateString("es-ES", { year: "numeric", month: "2-digit", day: "2-digit" });
+  return new Date(year, month - 1, day).toLocaleDateString("es-ES", {
+    year: "numeric", month: "2-digit", day: "2-digit",
+  });
+}
+
+function msDiff(msA, msB) {
+  return Math.abs(msA - msB);
+}
+
+function formatDuration(ms) {
+  if (!ms || ms < 0) return "—";
+  const totalSec = Math.floor(ms / 1000);
+  const days = Math.floor(totalSec / 86400);
+  const hours = Math.floor((totalSec % 86400) / 3600);
+  const mins = Math.floor((totalSec % 3600) / 60);
+  const parts = [];
+  if (days > 0) parts.push(`${days}d`);
+  parts.push(`${String(hours).padStart(2, "0")}h ${String(mins).padStart(2, "0")}m`);
+  return parts.join(" ");
+}
+
+function formatCounterDHMS(ms) {
+  const totalSec = Math.floor(Math.abs(ms) / 1000);
+  const d = Math.floor(totalSec / 86400);
+  const h = Math.floor((totalSec % 86400) / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  const hms = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return d > 0 ? `${d}d / ${hms}` : hms;
 }
 
 function sortMissionsByDate(missions) {
-  return missions.sort((a, b) => {
-    if (isFlexibleDate(a.date) && isFlexibleDate(b.date)) return a.date.localeCompare(b.date);
+  return [...missions].sort((a, b) => {
+    if (isFlexibleDate(a.date) && isFlexibleDate(b.date)) return (a.date ?? "").localeCompare(b.date ?? "");
     if (isFlexibleDate(a.date)) return 1;
     if (isFlexibleDate(b.date)) return -1;
     return new Date(a.date) - new Date(b.date);
@@ -59,317 +98,395 @@ function sortMissionsByDate(missions) {
 }
 
 function traducirEstado(estado) {
-  const estados = {
-    active: "Activo",
-    retired: "Retirado",
-    destroyed: "Destruido",
-    testing: "En Pruebas",
-    orbit: "En órbita",
-    unknown: "Desconocido",
-    discarded: "Desechado",
-  };
-  return estados[estado.toLowerCase()] || estado;
+  const map = { active: "Activo", retired: "Retirado", destroyed: "Destruido", orbit: "En órbita", unknown: "Desconocido", discarded: "Desechado" };
+  return map[estado?.toLowerCase()] ?? estado;
 }
 
-function getDockingPortClass(landing) {
-  if (!landing || landing === null) return "landing-expendable";
-  if (landing.includes("zenith")) return "docking-zenith";
-  if (landing.includes("forward")) return "docking-forward";
+function getDockingPortClass(port) {
+  if (!port) return "docking-expendable";
+  if (port.toLowerCase().includes("zenith")) return "docking-zenith";
+  if (port.toLowerCase().includes("forward")) return "docking-forward";
   return "";
 }
 
-function getLaunchPadClass(launchPad) {
-  if (!launchPad || launchPad === null) return "";
-  if (launchPad.includes("SLC-40")) return "launchpad-cape";
-  if (launchPad.includes("LC-39A")) return "launchpad-ksc";
-  if (launchPad.includes("SLC-4E")) return "launchpad-vnb";
+function getLaunchPadClass(pad) {
+  if (!pad) return "";
+  if (pad.includes("SLC-40")) return "launchpad-cape";
+  if (pad.includes("LC-39A")) return "launchpad-ksc";
+  if (pad.includes("SLC-4E")) return "launchpad-vnb";
   return "";
 }
-
-function getMissionRowId(mission) {
-  if (mission.success === true) return "mission-success";
-  if (mission.success === false) return "mission-failure";
-  return "mission-unknown";
-}
-
 
 function getQueryParam(param) {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get(param);
+  return new URLSearchParams(window.location.search).get(param);
 }
 
-async function getBoosterImageURL(path) {
+async function getImageURL(path) {
   try {
-    // Si no hay path, usar placeholder
     if (!path) return "placeholder.png";
-
-    // Detectar si es una URL completa (http/https)
-    // También aceptamos urls ya generadas de Firebase Storage (firebasestorage.googleapis.com)
-    const isHttpUrl = /^https?:\/\//i.test(path);
-    const isFirebaseFullUrl = /firebasestorage\.googleapis\.com/i.test(path);
-
-    if (isHttpUrl || isFirebaseFullUrl) {
-      return path;
-    }
-
-    // Si no es URL completa, asumimos que es un path en Firebase Storage
+    if (/^https?:\/\//i.test(path) || /firebasestorage\.googleapis\.com/i.test(path)) return path;
     return await getDownloadURL(ref(storage, path));
-  } catch (error) {
-    console.warn("No se pudo cargar la imagen:", path, error);
+  } catch {
     return "placeholder.png";
   }
 }
 
-// --------------------- CARGA DE DATOS ---------------------
+// Devuelve la misión que debe mostrar contador (en progreso o programada futura)
+function getCounterMission(capsule) {
+  const now = Date.now();
+  // Misión lanzada pero no completada (sin amerizaje)
+  const inProgress = capsule.missions.find(m => {
+    const launch = tsToDate(m.launchDate)?.getTime();
+    const splash = tsToDate(m.splashdown)?.getTime();
+    return launch && launch <= now && (!splash || splash > now);
+  });
+  if (inProgress) return inProgress;
+  // Misión programada con fecha futura
+  return capsule.missions.find(m => {
+    const launch = tsToDate(m.launchDate)?.getTime();
+    return m.programado && launch && launch > now;
+  }) ?? null;
+}
+
+// Devuelve { tPlus: Date|null, tMinus: Date|null } según estado de la misión
+function getCounterConfig(m) {
+  const now = Date.now();
+  const launch   = tsToDate(m.launchDate)?.getTime()    ?? null;
+  const docking  = tsToDate(m.docking?.date)?.getTime() ?? null;
+  const undocking = tsToDate(m.undocking)?.getTime()    ?? null;
+  const splashdown = tsToDate(m.splashdown)?.getTime()  ?? null;
+
+  // Programado y lanzamiento futuro → solo T- al lanzamiento
+  if (m.programado && launch && launch > now) {
+    return { tPlus: null, tMinus: new Date(launch) };
+  }
+
+  if (!launch || launch > now) return null;
+
+  const tPlus = new Date(launch);
+
+  if (docking && docking > now)            return { tPlus, tMinus: new Date(docking) };    // en tránsito
+  if (docking && !undocking && !splashdown) {
+    // Acoplado: T- al desacoplamiento si está planeado
+    const plannedUndock = tsToDate(m.undockingPlanned)?.getTime() ?? null;
+    return { tPlus, tMinus: plannedUndock && plannedUndock > now ? new Date(plannedUndock) : null };
+  }
+  if (undocking && undocking <= now && splashdown && splashdown > now)
+    return { tPlus, tMinus: new Date(splashdown) };                                         // regresando
+  if (undocking && undocking <= now && !splashdown)
+    return { tPlus, tMinus: null };                                                          // sin fecha de amerizaje
+
+  return null;
+}
+
+// Devuelve info de misión activa (acoplada o en vuelo libre) — usado para badge y animación
+function getActiveMission(capsule) {
+  return capsule.missions.find(m => m.inFlight || (m.docking?.date && !m.undocking && !m.splashdown));
+}
+
+// --------------------- CARGA ---------------------
 async function loadConfig() {
   const configDoc = await getDoc(doc(db, "data", "config"));
   if (configDoc.exists()) {
-    const data = configDoc.data();
-    lastUpdateEl.textContent = `${data.updateDate} • ${data.updateTime} UTC`;
+    const d = configDoc.data();
+    lastUpdateEl.textContent = `${d.updateDate} • ${d.updateTime} UTC`;
   } else {
     lastUpdateEl.textContent = "Desconocido";
   }
 }
 
-async function loadBoostersData() {
+async function loadCapsulesData() {
   try {
-    const boostersCollection = collection(db, "capsulas");
-    const boostersSnapshot = await getDocs(boostersCollection);
-
-    // Crear un array de promesas para todas las tarjetas
-    const boostersPromises = boostersSnapshot.docs
-      .filter(docSnap => docSnap.id !== "metadata")
+    const snapshot = await getDocs(collection(db, "capsulas"));
+    const promises = snapshot.docs
+      .filter(d => d.id !== "metadata")
       .map(async docSnap => {
         const data = docSnap.data();
-        const imageURL = await getBoosterImageURL(data.image || "placeholder.png");
-        const descr = data.desc;
-        console.log(data)
-        return {
-          id: docSnap.id,
-          name: data.name,
-          status: data.status,
-          type: data.type,
-          missions: data.missions || [],
-          image: imageURL,
-        };
+        const imageURL = await getImageURL(data.image);
+        return { id: docSnap.id, ...data, image: imageURL, missions: data.missions || [] };
       });
 
-    boostersData = await Promise.all(boostersPromises);
+    capsulesData = await Promise.all(promises);
+    capsulesData.sort((a, b) => parseInt(b.id.replace("C", "")) - parseInt(a.id.replace("C", "")));
 
-    // Ordenar por número de booster descendente
-    boostersData.sort((a, b) => parseInt(b.id.replace("C", "")) - parseInt(a.id.replace("C", "")));
+    capsulesData = capsulesData.map(capsule => {
+      const sortedMissions = sortMissionsByDate(capsule.missions);
+      const completed = sortedMissions.filter(m => !m.programado);
+      const flights = completed.length;
+      const firstFlight = completed[0]?.launchDate ?? null;
+      const lastFlight = completed.at(-1)?.launchDate ?? null;
 
-    // Procesar misiones
-    boostersData = boostersData.map(booster => {
-      console.log(booster)
-      let flights = 0, firstFlight = null, lastFlight = null, averageDaysBetweenFlights = "N/A";
-      if (booster.missions.length > 0) {
-        const sortedMissions = sortMissionsByDate(booster.missions);
-        const completedMissions = sortedMissions.filter(m => !m.programado);
-        flights = completedMissions.length;
-        if (flights > 0) {
-          firstFlight = completedMissions[0].date;
-          lastFlight = completedMissions[completedMissions.length - 1].date;
-        }
-        const dates = completedMissions.map(m => new Date(m.date).getTime());
-        if (dates.length >= 2) {
-          let totalDays = 0;
-          for (let i = 1; i < dates.length; i++) {
-            totalDays += Math.ceil((dates[i] - dates[i - 1]) / (1000 * 60 * 60 * 24));
-          }
-          averageDaysBetweenFlights = Math.round(totalDays / (dates.length - 1)) + " días";
-        }
+      let avgDays = "N/A";
+      const dates = completed.map(m => tsToDate(m.launchDate)?.getTime()).filter(Boolean);
+      if (dates.length >= 2) {
+        let total = 0;
+        for (let i = 1; i < dates.length; i++) total += dates[i] - dates[i - 1];
+        avgDays = Math.round(total / (dates.length - 1) / 86400000) + " días";
       }
-      return { ...booster, flights, firstFlight, lastFlight, averageDaysBetweenFlights };
+
+      // Vuelo libre total: suma de (launch→dock) + (undock→splashdown) por misión completada
+      let totalFreeFlightMs = 0;
+      completed.forEach(m => {
+        const l = tsToDate(m.launchDate)?.getTime();
+        const d = tsToDate(m.docking?.date)?.getTime();
+        const u = tsToDate(m.undocking)?.getTime();
+        const s = tsToDate(m.splashdown)?.getTime();
+        if (l && d) totalFreeFlightMs += msDiff(d, l);
+        if (u && s) totalFreeFlightMs += msDiff(s, u);
+      });
+      const totalFreeFlight = totalFreeFlightMs > 0 ? formatDuration(totalFreeFlightMs) : null;
+
+      return { ...capsule, flights, firstFlight, lastFlight, avgDays, totalFreeFlight };
     });
 
-    filteredBoosters = [...boostersData];
-    console.log("[v5] Datos cargados desde Firebase:", boostersData.length, "propulsores");
-
-  } catch (error) {
-    console.error("[v5] Error cargando datos desde Firebase:", error);
-    boostersGrid.innerHTML = '<div class="loading" style="color: #ef4444;">Error cargando datos de Firebase.</div>';
+    filteredCapsules = [...capsulesData];
+  } catch (e) {
+    console.error("Error cargando cápsulas:", e);
+    boostersGrid.innerHTML = '<div class="loading" style="color:#ef4444;">Error cargando datos de Firebase.</div>';
   }
 }
 
-// --------------------- FILTROS Y BÚSQUEDA ---------------------
+// --------------------- FILTROS ---------------------
 function setActiveFilter(filter) {
-  filterButtons.forEach(btn => btn.classList.remove("active"));
+  filterButtons.forEach(b => b.classList.remove("active"));
   document.querySelector(`[data-filter="${filter}"]`)?.classList.add("active");
   currentFilter = filter;
 }
 
-function filterBoosters(filter) {
-  if (filter === "all") filteredBoosters = [...boostersData];
-  else if (filter === "discarded") filteredBoosters = boostersData.filter(b => b.status === "discarded" || b.status === "Desechado");
-  else if (filter === "retired") filteredBoosters = boostersData.filter(b => b.status === "retired" || b.status === "Retirado");
-  else if (filter === "destroyed") filteredBoosters = boostersData.filter(b => b.status === "destroyed" || b.status === "Destruido");
-  else if (filter === "scheduled") filteredBoosters = boostersData.filter(hasScheduledFlight);
-  else filteredBoosters = boostersData.filter(b => b.status === filter);
-  renderBoosters();
+function getFilteredBase(filter) {
+  if (filter === "all") return [...capsulesData];
+  if (filter === "scheduled") return capsulesData.filter(c => c.missions.some(m => m.programado));
+  return capsulesData.filter(c => c.status === filter);
 }
 
-function hasScheduledFlight(booster) {
-  return booster.missions.some(m => m.programado);
+function filterCapsules(filter) {
+  filteredCapsules = getFilteredBase(filter);
+  renderCapsules();
 }
 
-function hasInFlight(booster) {
-  return booster.missions.some(m => m.inFlight);
-}
+// --------------------- RENDER TARJETAS ---------------------
+const TYPE_LABELS = { cargo_v1: "Cargo 1", cargo_v2: "Cargo 2", crew: "Crew Dragon" };
 
-// --------------------- RENDER ---------------------
-function createBoosterCard(booster) {
+function createCapsuleCard(capsule) {
   const card = document.createElement("div");
   card.className = "booster-card";
-  if (hasScheduledFlight(booster)) card.classList.add("has-scheduled-flight");
-  card.addEventListener("click", () => openModal(booster));
+  const activeMission = getActiveMission(capsule);
+  if (activeMission?.inFlight) card.classList.add("is-in-flight");
+  else if (capsule.missions.some(m => m.programado)) card.classList.add("has-scheduled-flight");
+  card.addEventListener("click", () => openModal(capsule));
 
-  const statusClass = `status-${booster.status.toLowerCase().replace(" ", "-")}`;
-  const statusText = traducirEstado(booster.status);
+  const statusClass = `status-${capsule.status?.toLowerCase().replace(" ", "-")}`;
+  const statusText = traducirEstado(capsule.status);
+  const typeLabel = TYPE_LABELS[capsule.type] ?? capsule.type ?? "N/A";
+  const lastMission = capsule.missions.filter(m => !m.programado).at(-1);
+  const lastFlightText = lastMission ? `Última misión: ${lastMission.name}` : "Sin misiones realizadas";
 
-  const typeClass = `type-${booster.type}`;
-  const typeText = booster.type === "F9" ? "Falcon 9" : booster.type?.includes("FH") ? "Falcon Heavy" : "N/A";
-
-  const lastFlightText = booster.lastFlight ? `Última misión: ${booster.missions[booster.missions.length - 1].undocking}` : "Sin misiones realizadas";
+  const counterMission = getCounterMission(capsule);
+  const counterCfg = counterMission ? getCounterConfig(counterMission) : null;
+  let counterHTML = "";
+  if (counterCfg) {
+    const plusId  = `cplus-${capsule.id}`;
+    const minusId = `cminus-${capsule.id}`;
+    counterHTML = `
+      <div class="live-counter-wrap">
+        ${counterCfg.tPlus  ? `<span class="live-counter t-plus"  id="${plusId}">T+ …</span>` : ""}
+        ${counterCfg.tMinus ? `<span class="live-counter t-minus" id="${minusId}">T- …</span>` : ""}
+      </div>`;
+  }
 
   card.innerHTML = `
-        <span class="block">${{
-      'cargo_v1': 'Cargo 1',
-      'cargo_v2': 'Cargo 2',
-      'crew': 'Crew',
-    }[booster.type] || "N/A"}</span>
-        <div class="booster-image">
-            <img src="${booster.image}" alt="${booster.name}" loading="lazy" 
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <div class="altImage">${booster.id}</div>
-        </div>
-        <div class="booster-content">
-            <h3 class="booster-name">${booster.id}${booster.name ? ` - ${booster.name}` : ""}</h3>
-            <span class="booster-status ${statusClass}">${statusText}</span>
-            <p class="booster-flights">Misiones realizadas: ${booster.flights}</p>
-            <p class="booster-first-flight">${lastFlightText}</p>
-        </div>
-    `;
+    <span class="block">${typeLabel}</span>
+    <div class="booster-image">
+      <img src="${capsule.image}" alt="${capsule.id}" loading="lazy"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <div class="altImage">${capsule.id}</div>
+    </div>
+    <div class="booster-content">
+      <h3 class="booster-name">${capsule.id}${capsule.name ? ` — ${capsule.name}` : ""}</h3>
+      <span class="booster-status ${statusClass}">${statusText}</span>
+      <p class="booster-flights">Misiones: ${capsule.flights}</p>
+      <p class="booster-first-flight">${lastFlightText}</p>
+      ${counterHTML}
+    </div>
+  `;
+
   return card;
 }
 
-function renderBoosters() {
+function renderCapsules() {
+  liveCounterIntervals.forEach(clearInterval);
+  liveCounterIntervals.length = 0;
   boostersGrid.innerHTML = "";
-  if (filteredBoosters.length === 0) {
-    boostersGrid.innerHTML = '<div class="loading">No se encontraron propulsores para este filtro.</div>';
+
+  if (filteredCapsules.length === 0) {
+    boostersGrid.innerHTML = '<div class="loading">No se encontraron cápsulas para este filtro.</div>';
     return;
   }
-  filteredBoosters.forEach(b => boostersGrid.appendChild(createBoosterCard(b)));
+
+  filteredCapsules.forEach(c => boostersGrid.appendChild(createCapsuleCard(c)));
+  startLiveCounters();
 }
 
-function getBoosterType(type) {
-  if (!type) return "N/A";
+function startLiveCounters() {
+  filteredCapsules.forEach(capsule => {
+    const mission = getCounterMission(capsule);
+    if (!mission) return;
+    const cfg = getCounterConfig(mission);
+    if (!cfg) return;
 
-  const map = {
-    FH: "Falcon Heavy",
-    FHC: "Falcon Heavy Center",
-    FHS: "Falcon Heavy Side",
-    F9: "Falcon 9",
-  };
+    const plusEl  = document.getElementById(`cplus-${capsule.id}`);
+    const minusEl = document.getElementById(`cminus-${capsule.id}`);
 
-  const upper = type.toUpperCase();
-
-  // Ordenar las claves de más largas a más cortas
-  const key = Object.keys(map)
-    .sort((a, b) => b.length - a.length)
-    .find(k => upper === k || upper.startsWith(k));
-
-  return key ? map[key] : "Desconocido";
+    const tick = () => {
+      const now = Date.now();
+      if (plusEl && cfg.tPlus)
+        plusEl.textContent = `T+ ${formatCounterDHMS(now - cfg.tPlus.getTime())}`;
+      if (minusEl && cfg.tMinus) {
+        const diff = cfg.tMinus.getTime() - now;
+        minusEl.textContent = diff > 0
+          ? `T- ${formatCounterDHMS(diff)}`
+          : `T+ ${formatCounterDHMS(-diff)}`;
+      }
+    };
+    tick();
+    liveCounterIntervals.push(setInterval(tick, 1000));
+  });
 }
-
 
 // --------------------- MODAL ---------------------
-function openModal(booster) {
-  const statusClass = `status-${booster.status.toLowerCase().replace(" ", "-")}`;
-  const statusText = traducirEstado(booster.status);
+function openModal(capsule) {
+  const statusClass = `status-${capsule.status?.toLowerCase().replace(" ", "-")}`;
+  const statusText = traducirEstado(capsule.status);
+  const typeLabel = TYPE_LABELS[capsule.type] ?? capsule.type ?? "N/A";
+  const activeMission = getActiveMission(capsule);
 
-  const typeClass = `type-${booster.type}`;
-  const typeText = getBoosterType(booster.type);
+  const descripcion = capsule.desc
+    ? `<div class="booster-description"><span>Descripción:</span> ${capsule.desc}</div>` : "";
 
+  // Fechas resumen
+  const firstFlight = capsule.firstFlight;
+  const lastFlight = capsule.lastFlight;
+
+  // Historial
   let flightHistoryHTML = "";
-  if (booster.missions.length > 0) {
+  if (capsule.missions.length > 0) {
     flightHistoryHTML = `
-        <div class="flight-history">
-            <h3>Historial de Misiones</h3>
-                ${booster.missions.map((m, i) => `
-                        <article class="mission">
-                            <h4>Vuelo ${booster.missions.length - i}</h4>
-                            <p><strong>Misión:</strong> ${m.name}</p>
-                            <p><strong>Fecha:</strong> ${formatoFechaUTC(m.docking.date)}</p>
-                            <p><strong>Docking Port:</strong> <span class="landing-platform ${getDockingPortClass(m.docking.port)}">${m.docking.port || "Desechado"}</span></p>
-                            <ul class="crew">
-                                ${m.crew?.map(member => `<li>
-                                  <img src="${member.image}" alt="${member.name}" loading="lazy" 
-                                       onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">  
-                                  <h5>${member.name}</h5>
-                                  <span class="role">${member.role}</span>
-                                  </li>`).join("")}
-                            </ul>
-                        </article>`).join("")}
-        </div>`;
+      <div class="flight-history">
+        <h3>Historial de Misiones</h3>
+        ${capsule.missions.map((m, i) => buildMissionArticle(m, i, capsule)).join("")}
+      </div>`;
   } else {
-    flightHistoryHTML = `<div class="flight-history"><h3>Historial de Vuelos</h3><p style="color: var(--muted-foreground); text-align: center; padding: 2rem;">Este propulsor aún no ha realizado vuelos.</p></div>`;
+    flightHistoryHTML = `<div class="flight-history"><h3>Historial de Misiones</h3>
+      <p style="color:var(--muted-foreground);text-align:center;padding:2rem;">Esta cápsula aún no ha realizado misiones.</p></div>`;
   }
-  let descripcion;
-  if (booster.desc) {
-    descripcion = `<div class="booster-description"><span>Descripción:</span> ${booster.desc}</div>`
-  } else {
-    descripcion = ``
-  }
-  const firstFlight = booster.missions[0] ? booster.missions[0].launchDate : "N/A";
-  const lastFlight = booster.missions[booster.missions.length - 1] ? booster.missions[booster.missions.length - 1].launchDate : "N/A";
-  console.log(formatDate('21-03-2024'))
 
   modalBody.innerHTML = `
-        <div class="modal-header">
-            <img src="${booster.image}" alt="${booster.name}" class="modal-image" loading="lazy" 
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <h2 class="modal-title">${booster.name ?? booster.id}</h2>
-            ${hasScheduledFlight(booster) ? '<span class="scheduled-badge">VUELO PROGRAMADO</span>' : ""}
-            ${hasInFlight(booster) ? '<span class="scheduled-badge">EN VUELO</span>' : ""}
-            <span class="booster-type ${typeClass}">${typeText}</span>
-            <span class="booster-status ${statusClass}">${statusText}</span>
-        </div>
-        ${descripcion}
-        <div class="booster-dates">
-            <div class="booster-date"><div style="color: var(--muted-foreground);">Primer Vuelo</div><h3>${firstFlight ? formatDate(firstFlight) : "N/A"}</h3></div>
-            <div class="booster-date"><div style="color: var(--muted-foreground);">Vuelos Totales</div><h3>${booster.missions.length}</h3></div>
-            ${booster.missions.length >= 2 ? `<div class="booster-date"><div style="color: var(--muted-foreground);">Entre vuelos</div><h3>${booster.averageDaysBetweenFlights}</h3></div>` : ""}
-            <div class="booster-date"><div style="color: var(--muted-foreground);">Último Vuelo</div><h3>${lastFlight ? formatDate(lastFlight) : "N/A"}</h3></div>
-        </div>
-        ${flightHistoryHTML}
-    `;
+    <div class="modal-header">
+      <img src="${capsule.image}" alt="${capsule.id}" class="modal-image" loading="lazy"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <h2 class="modal-title">${capsule.name ?? capsule.id}</h2>
+      ${activeMission ? '<span class="scheduled-badge">EN MISIÓN</span>' : ""}
+      ${capsule.missions.some(m => m.programado) ? '<span class="scheduled-badge">VUELO PROGRAMADO</span>' : ""}
+      <span class="booster-status ${statusClass}">${statusText}</span>
+    </div>
+    ${descripcion}
+    <div class="booster-dates">
+      <div class="booster-date"><div style="color:var(--muted-foreground);">Primera Misión</div><h3>${formatoFechaUTC(firstFlight)}</h3></div>
+      <div class="booster-date"><div style="color:var(--muted-foreground);">Misiones Totales</div><h3>${capsule.missions.length}</h3></div>
+      ${capsule.missions.length >= 2 ? `<div class="booster-date"><div style="color:var(--muted-foreground);">Entre misiones</div><h3>${capsule.avgDays}</h3></div>` : ""}
+      <div class="booster-date"><div style="color:var(--muted-foreground);">Última Misión</div><h3>${formatoFechaUTC(lastFlight)}</h3></div>
+      ${capsule.totalFreeFlight ? `<div class="booster-date"><div style="color:var(--muted-foreground);">Vuelo libre total</div><h3>${capsule.totalFreeFlight}</h3></div>` : ""}
+    </div>
+    ${flightHistoryHTML}
+  `;
 
   modal.style.display = "block";
   document.body.classList.add("modal-open");
 
   const url = new URL(window.location);
-  url.searchParams.set("id", booster.id);
+  url.searchParams.set("id", capsule.id);
   window.history.pushState({}, "", url);
+}
 
-  // --------------------- UTILS ---------------------
-  function formatoFechaUTC(timestamp) {
-    if (!timestamp) return '';
+function buildMissionArticle(m, i, capsule) {
+  const dockDate   = tsToDate(m.docking?.date);
+  const undockDate = tsToDate(m.undocking);
+  const splashDate = tsToDate(m.splashdown);
+  const launchDate = tsToDate(m.launchDate);
 
-    const fecha = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  // Tiempo acoplado (estático si ya desacopló)
+  let dockedTime = "";
+  if (dockDate && undockDate)
+    dockedTime = formatDuration(msDiff(undockDate.getTime(), dockDate.getTime()));
 
-    return fecha.toLocaleString('es-ES', {
-      timeZone: 'UTC',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    });
+  // Contadores en vivo usando la misma lógica de getCounterConfig
+  const cfg = getCounterConfig(m);
+  let liveCountersHTML = "";
+  if (cfg) {
+    const plusId  = `mplus-${capsule.id}-${i}`;
+    const minusId = `mminus-${capsule.id}-${i}`;
+    liveCountersHTML = `
+      <div class="live-counter-wrap modal-counters">
+        ${cfg.tPlus  ? `<span class="live-counter t-plus"  id="${plusId}">T+ …</span>`  : ""}
+        ${cfg.tMinus ? `<span class="live-counter t-minus" id="${minusId}">T- …</span>` : ""}
+      </div>`;
+    setTimeout(() => {
+      const plusEl  = document.getElementById(plusId);
+      const minusEl = document.getElementById(minusId);
+      const tick = () => {
+        const now = Date.now();
+        if (plusEl && cfg.tPlus)
+          plusEl.textContent = `T+ ${formatCounterDHMS(now - cfg.tPlus.getTime())}`;
+        if (minusEl && cfg.tMinus) {
+          const diff = cfg.tMinus.getTime() - now;
+          minusEl.textContent = diff > 0
+            ? `T- ${formatCounterDHMS(diff)}`
+            : `T+ ${formatCounterDHMS(-diff)}`;
+        }
+      };
+      tick();
+      const iv = setInterval(tick, 1000);
+      modalClose.addEventListener("click", () => clearInterval(iv), { once: true });
+      modal.addEventListener("click", e => { if (e.target === modal) clearInterval(iv); }, { once: true });
+    }, 0);
   }
 
+  // Destino
+  const destIcon = { ISS: "🛸", LEO: "🌍", Polar: "🌐" };
+  const destBadge = m.destination
+    ? `<span class="dest-badge">${destIcon[m.destination] ?? "🌍"} ${m.destination}</span>` : "";
+
+  const isProgramado = m.programado;
+
+  return `
+    <article class="mission" ${isProgramado ? 'style="border-color:#f59e0b;"' : ""}>
+      <div class="mission-article-header">
+        ${m.patch ? `<img src="${m.patch}" alt="parche ${m.name}" class="mission-patch" loading="lazy">` : ""}
+        <div class="mission-article-title">
+          <h4>${m.name} ${isProgramado ? '<span class="scheduled-badge" style="font-size:0.7rem;">PROGRAMADO</span>' : ""}</h4>
+          ${destBadge}
+        </div>
+      </div>
+      <div class="mission-article-body">
+        ${liveCountersHTML}
+        ${launchDate ? `<p><strong>Lanzamiento:</strong> ${formatoFechaUTC(m.launchDate)}</p>` : ""}
+        ${m.launchPad ? `<p><strong>Plataforma:</strong> <span class="launch-platform ${getLaunchPadClass(m.launchPad)}">${m.launchPad}</span></p>` : ""}
+        ${dockDate ? `<p><strong>Acoplamiento:</strong> ${formatoFechaUTC(m.docking.date)}${m.docking?.port ? ` — <span class="landing-platform ${getDockingPortClass(m.docking.port)}">${m.docking.port}</span>` : ""}</p>` : ""}
+        ${dockedTime ? `<p><strong>Tiempo acoplado:</strong> ${dockedTime}</p>` : ""}
+        ${undockDate ? `<p><strong>Desacoplamiento:</strong> ${formatoFechaUTC(m.undocking)}</p>` : ""}
+        ${splashDate ? `<p><strong>Amerizaje:</strong> ${formatoFechaUTC(m.splashdown)}</p>` : ""}
+        ${m.crew?.length ? `
+          <ul class="crew">
+            ${m.crew.map(member => `
+              <li>
+                <img src="${member.image}" alt="${member.name}" loading="lazy"
+                     onerror="this.style.display='none';">
+                <h5>${member.name}</h5>
+                <span class="role">${member.role}</span>
+              </li>`).join("")}
+          </ul>` : ""}
+      </div>
+    </article>`;
 }
 
 function closeModal() {
@@ -380,23 +497,24 @@ function closeModal() {
   window.history.pushState({}, "", url);
 }
 
-// --------------------- EVENT LISTENERS ---------------------
+// --------------------- LISTENERS ---------------------
 function setupEventListeners() {
   filterButtons.forEach(btn => {
     btn.addEventListener("click", function () {
-      const filter = this.dataset.filter;
-      setActiveFilter(filter);
-      filterBoosters(filter);
+      setActiveFilter(this.dataset.filter);
+      filterCapsules(this.dataset.filter);
+      document.getElementById("search-input").value = "";
     });
   });
 
   const searchInput = document.getElementById("search-input");
   searchInput.addEventListener("input", () => {
-    const query = searchInput.value.toLowerCase();
-    document.querySelectorAll(".booster-card").forEach(card => {
-      const name = card.querySelector(".booster-name").textContent.toLowerCase();
-      card.style.display = name.includes(query) ? "block" : "none";
-    });
+    const q = searchInput.value.toLowerCase().trim();
+    const base = getFilteredBase(currentFilter);
+    filteredCapsules = q
+      ? base.filter(c => c.id.toLowerCase().includes(q) || (c.name ?? "").toLowerCase().includes(q))
+      : base;
+    renderCapsules();
   });
 
   modalClose.addEventListener("click", closeModal);
@@ -405,48 +523,54 @@ function setupEventListeners() {
 }
 
 // --------------------- ESTADÍSTICAS ---------------------
-function updateStats() {
-  const totalBoosters = boostersData.length;
-  const activeBoosters = boostersData.filter(b => b.status === "active").length;
-  const noActiveBoosters = totalBoosters - activeBoosters;
-  let totalFlights = 0;
-  boostersData.forEach(b => totalFlights += b.flights);
-
-  totalBoostersEl.textContent = totalBoosters;
-  activeBoostersEl.textContent = activeBoosters;
-  noActiveBoostersEl.textContent = noActiveBoosters;
-  totalFlightsEl.textContent = totalFlights;
-  const retired = boostersData.filter((b) => b.status === "retired" || b.status === "Retirado").length
-  const destroyed = boostersData.filter((b) => b.status === "destroyed" || b.status === "Destruido").length
-  const discarded = boostersData.filter((b) => b.status === "discarded" || b.status === "Desechado").length
-  const testing = boostersData.filter((b) => b.status === "testing" || b.status === "En pruebas" || b.status === "Desarrollo").length
-
-  totalBoostersEl.textContent = totalBoosters
-  activeBoostersEl.textContent = activeBoosters
-  noActiveBoostersEl.textContent = noActiveBoosters
-
-  document.getElementById("retired-boosters").textContent = retired
-  document.getElementById("destroyed-boosters").textContent = destroyed
-  document.getElementById("discarded-boosters").textContent = discarded
-  document.getElementById("testing-boosters").textContent = testing
-  totalFlightsEl.textContent = totalFlights
+function animateCounter(el, target, duration = 800) {
+  if (!el) return;
+  const start = performance.now();
+  const update = now => {
+    const p = Math.min((now - start) / duration, 1);
+    el.textContent = Math.round((1 - Math.pow(1 - p, 3)) * target);
+    if (p < 1) requestAnimationFrame(update);
+  };
+  requestAnimationFrame(update);
 }
 
-// --------------------- INICIALIZACIÓN ---------------------
+function updateStats() {
+  const total = capsulesData.length;
+  const active = capsulesData.filter(c => c.status === "active").length;
+  const retired = capsulesData.filter(c => c.status === "retired").length;
+  const destroyed = capsulesData.filter(c => c.status === "destroyed").length;
+  const discarded = capsulesData.filter(c => c.status === "discarded").length;
+  const orbit = capsulesData.filter(c => c.status === "orbit").length;
+  const totalMissions = capsulesData.reduce((s, c) => s + c.flights, 0);
+
+  animateCounter(totalBoostersEl, total);
+  animateCounter(activeBoostersEl, active);
+  animateCounter(noActiveBoostersEl, total - active);
+  animateCounter(totalFlightsEl, totalMissions);
+  animateCounter(document.getElementById("retired-boosters"), retired);
+  animateCounter(document.getElementById("destroyed-boosters"), destroyed);
+  animateCounter(document.getElementById("discarded-boosters"), discarded);
+  animateCounter(document.getElementById("orbit-capsules"), orbit);
+}
+
+// --------------------- INIT ---------------------
 document.addEventListener("DOMContentLoaded", async () => {
-  boostersGrid.innerHTML = '<div class="loading">Cargando propulsores desde Firebase...</div>';
-  await loadBoostersData();
-  if (boostersData.length > 0) {
+  boostersGrid.innerHTML = '<div class="loading">Cargando cápsulas desde Firebase...</div>';
+  await loadCapsulesData();
+  filteredCapsules = [...capsulesData];
+  if (capsulesData.length > 0) {
     updateStats();
-    renderBoosters();
+    renderCapsules();
     setupEventListeners();
     hideLoader();
 
-    const boosterParam = getQueryParam("booster");
-    if (boosterParam) {
-      const booster = boostersData.find(b => b.name === boosterParam);
-      if (booster) openModal(booster);
+    const idParam = getQueryParam("id");
+    if (idParam) {
+      const capsule = capsulesData.find(c => c.id === idParam);
+      if (capsule) openModal(capsule);
     }
+  } else {
+    hideLoader();
   }
 });
 

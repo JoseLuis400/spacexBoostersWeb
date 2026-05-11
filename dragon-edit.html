@@ -3,10 +3,200 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Capsulas SpaceX</title>
+  <title>Admin - Dragon Capsules</title>
+  <link rel="stylesheet" href="css/edit.css">
+  <link rel="stylesheet" href="css/edit-capsulas.css">
   <link rel="shortcut icon" href="img/icon.png" type="image/x-icon">
+
+  <script type="module">
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    document.addEventListener("DOMContentLoaded", () => {
+      const auth = getAuth();
+      onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          const loginCss = document.createElement("link");
+          loginCss.rel = "stylesheet";
+          loginCss.href = "css/login.css";
+          document.head.appendChild(loginCss);
+        }
+      });
+    });
+  </script>
 </head>
 <body>
-  
+
+  <!-- SECCIÓN LOGIN -->
+  <div id="loginSection">
+    <a href="https://spacexboosters.netlify.app/dragon" class="back-link">← Volver al sitio</a>
+    <h3 style="text-align: center; padding-bottom: 25px;">Iniciar sesión</h3>
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginPassword" placeholder="Contraseña">
+    <button id="loginBtn">Iniciar sesión</button>
+  </div>
+
+  <div id="userInfo">
+    Conectado como: <span id="userEmail">--</span>
+    <button id="logoutBtn">Cerrar sesión</button>
+  </div>
+
+  <!-- SECCIÓN ADMIN -->
+  <div id="adminSection">
+    <header>
+      <div class="container">
+        <h1>Panel de Administración</h1>
+        <p>Gestiona las cápsulas Dragon y sus misiones</p>
+        <a href="https://spacexboosters.netlify.app/dragon" class="back-link">← Volver al sitio</a>
+        <div id="update-info">
+          Última actualización: <span id="last-update">Cargando...</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="container admin-main">
+      <div class="admin-controls">
+        <button id="addCapsuleBtn" class="btn btn-primary">+ Agregar Cápsula</button>
+        <button id="btn-actualizar" class="btn btn-primary">🕒 Actualizar Tiempo</button>
+      </div>
+
+      <div id="capsulesAdmin" class="boosters-admin-grid"></div>
+    </main>
+
+    <!-- ===== Modal Cápsula ===== -->
+    <div id="capsuleModal" class="modal">
+      <div class="modal-content admin-modal">
+        <span class="close">&times;</span>
+        <h2 id="capsuleModalTitle">Agregar Cápsula</h2>
+        <form id="capsuleForm">
+          <div class="form-group">
+            <label for="capsuleId">ID de la Cápsula:</label>
+            <input type="text" id="capsuleId" required placeholder="C201">
+          </div>
+          <div class="form-group">
+            <label for="capsuleName">Nombre (opcional):</label>
+            <input type="text" id="capsuleName" placeholder="Endeavour">
+          </div>
+          <div class="form-group">
+            <label for="capsuleDesc">Descripción:</label>
+            <input type="text" id="capsuleDesc" placeholder="Descripción breve de la cápsula">
+          </div>
+          <div class="form-group">
+            <label for="capsuleType">Tipo:</label>
+            <select id="capsuleType" required>
+              <option value="crew">Crew Dragon</option>
+              <option value="cargo_v2">Cargo Dragon 2</option>
+              <option value="cargo_v1">Cargo Dragon 1</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="capsuleStatus">Estado:</label>
+            <select id="capsuleStatus" required>
+              <option value="active">Activo</option>
+              <option value="orbit">En órbita</option>
+              <option value="retired">Retirado</option>
+              <option value="destroyed">Destruido</option>
+              <option value="discarded">Desechado</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="capsuleImage">Imagen (URL o ruta):</label>
+            <input type="text" id="capsuleImage" placeholder="img/C201.jpg">
+          </div>
+          <div class="form-group">
+            <label for="capsuleImageFile">Subir imagen:</label>
+            <input type="file" id="capsuleImageFile" accept="image/*">
+            <small>Si subes una imagen sobreescribe la ruta de arriba.</small>
+            <progress id="uploadProgress" value="0" max="100" style="width:100%; display:none;"></progress>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Guardar Cápsula</button>
+            <button type="button" class="btn btn-secondary" id="cancelCapsuleBtn">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ===== Modal Misión ===== -->
+    <div id="missionModal" class="modal">
+      <div class="modal-content admin-modal">
+        <span class="close">&times;</span>
+        <h2 id="missionModalTitle">Agregar Misión</h2>
+        <form id="missionForm">
+          <div class="form-group">
+            <label for="missionName">Nombre de la misión:</label>
+            <input type="text" id="missionName" required placeholder="Crew-9">
+          </div>
+          <!-- Eventos de vuelo dinámicos -->
+          <div class="form-group">
+            <label>Eventos de vuelo:</label>
+            <div id="dateEventBtns" class="date-event-btns">
+              <button type="button" class="btn btn-event" data-event="launch">🚀 Lanzamiento</button>
+              <button type="button" class="btn btn-event" data-event="docking">🔗 Acoplamiento</button>
+              <button type="button" class="btn btn-event" data-event="undocking">🔓 Desacoplamiento</button>
+              <button type="button" class="btn btn-event" data-event="splashdown">💧 Amerizaje</button>
+            </div>
+            <div id="dateEventsContainer"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="missionReturnDate">Regreso previsto (UTC):</label>
+            <input type="datetime-local" id="missionReturnDate">
+            <small>Opcional. Muestra un contador T- en la página.</small>
+          </div>
+          <div class="form-group">
+            <label for="missionDestination">Destino:</label>
+            <select id="missionDestination">
+              <option value="">— Sin especificar —</option>
+              <option value="ISS">Estación Espacial Internacional (ISS)</option>
+              <option value="LEO">Órbita Baja (LEO)</option>
+              <option value="Polar">Órbita Polar</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="missionSuccess">Resultado:</label>
+            <select id="missionSuccess">
+              <option value="null">Pendiente</option>
+              <option value="true">Éxito</option>
+              <option value="false">Fallo</option>
+            </select>
+          </div>
+          <div class="form-group checkbox-group">
+            <label>
+              <input type="checkbox" id="missionProgramado"> Misión programada (futura)
+            </label>
+            <label style="margin-left: 1rem;">
+              <input type="checkbox" id="missionInFlight"> En vuelo
+            </label>
+          </div>
+
+          <!-- Parche de misión -->
+          <div class="form-group">
+            <label for="missionPatch">Parche de misión (URL o ruta):</label>
+            <input type="text" id="missionPatch" placeholder="img/patches/crew9.png">
+          </div>
+          <div class="form-group">
+            <label for="missionPatchFile">Subir parche:</label>
+            <input type="file" id="missionPatchFile" accept="image/*">
+            <progress id="patchUploadProgress" value="0" max="100" style="width:100%;display:none;"></progress>
+          </div>
+
+          <!-- Tripulación -->
+          <div class="form-group">
+            <label>Tripulación:</label>
+            <div id="crewList" class="crew-list"></div>
+            <button type="button" class="btn add-mission-btn" id="addCrewBtn">+ Agregar tripulante</button>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Guardar Misión</button>
+            <button type="button" class="btn btn-secondary" id="cancelMissionBtn">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div><!-- fin adminSection -->
+
+  <script type="module" src="js/editcapsulas.js"></script>
+  <script type="module" src="js/login.js"></script>
 </body>
 </html>
