@@ -257,9 +257,16 @@ function setActiveFilter(filter) {
   currentFilter = filter;
 }
 
+function isCurrentlyInOrbit(capsule) {
+  return capsule.missions.some(m =>
+    !m.programado && (m.inFlight || (m.docking?.date && !m.undocking && !m.splashdown))
+  );
+}
+
 function getFilteredBase(filter) {
   if (filter === "all") return [...capsulesData];
   if (filter === "scheduled") return capsulesData.filter(c => c.missions.some(m => m.programado));
+  if (filter === "orbit") return capsulesData.filter(c => c.status === "orbit" || isCurrentlyInOrbit(c));
   return capsulesData.filter(c => c.status === filter);
 }
 
