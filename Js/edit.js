@@ -231,6 +231,9 @@ function createBoosterCard(booster) {
   const vuelosRealizados = booster.missions.filter((m) => !m.programado).length
   const hasScheduled = booster.missions.some((m) => m.programado)
   const isInFlight = booster.missions.some((m) => m.inFlight)
+  const updatedAt = booster.updatedAt?.toDate
+    ? booster.updatedAt.toDate().toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })
+    : null
 
   card.innerHTML = `
     <div class="card-content">
@@ -247,6 +250,7 @@ function createBoosterCard(booster) {
         <p><strong>Block:</strong> ${booster.block || "N/A"}</p>
         <p><strong>Estado:</strong> <span class="status-badge status-${statusClass}">${booster.status}</span></p>
         <p><strong>Vuelos:</strong> ${vuelosRealizados}</p>
+        ${updatedAt ? `<p class="admin-updated-at">🕐 Actualizado: ${updatedAt}</p>` : ""}
       </div>
       <div class="missions-list">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">

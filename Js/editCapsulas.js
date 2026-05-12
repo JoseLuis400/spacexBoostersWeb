@@ -300,6 +300,9 @@ function createCapsuleCard(capsule) {
   const typeLabel = TYPE_LABELS[capsule.type] ?? capsule.type;
   const hasScheduled = capsule.missions.some(m => m.programado);
   const isInFlight = capsule.missions.some(m => !m.programado && (m.inFlight || (m.docking?.date && !m.undocking && !m.splashdown)));
+  const updatedAt = capsule.updatedAt?.toDate
+    ? capsule.updatedAt.toDate().toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })
+    : null;
 
   card.innerHTML = `
     <div class="card-content">
@@ -315,6 +318,7 @@ function createCapsuleCard(capsule) {
         <p><strong>Tipo:</strong> ${typeLabel}</p>
         <p><strong>Estado:</strong> <span class="status-badge status-${capsule.status}">${statusLabel}</span></p>
         <p><strong>Misiones completadas:</strong> ${completedMissions}</p>
+        ${updatedAt ? `<p class="admin-updated-at">🕐 Actualizado: ${updatedAt}</p>` : ""}
       </div>
       <div class="missions-list">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">

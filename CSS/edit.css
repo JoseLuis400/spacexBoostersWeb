@@ -1153,6 +1153,14 @@ span.block {
   color: #7dd3fc;
 }
 
+.admin-updated-at {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+  font-style: italic;
+}
+
 .admin-booster-card:hover {
   border-color: rgba(0, 217, 255, 0.5);
   box-shadow: 0 4px 20px rgba(0, 217, 255, 0.2);
