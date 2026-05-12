@@ -327,7 +327,7 @@ function createCapsuleCard(capsule) {
         <div style="max-height:400px;overflow-y:auto;padding-right:0.5rem;">
           ${capsule.missions.map((m, i) => createMissionItem(m, i, capsule.id)).join("")}
         </div>
-        <button class="btn add-mission-btn" onclick="addMission('${capsule.id}')">+ Agregar Misión</button>
+        <button class="btn add-mission-btn" onclick="cAddMission('${capsule.id}')">+ Agregar Misión</button>
       </div>
     </div>
   `;
@@ -349,8 +349,8 @@ function createMissionItem(mission, index, capsuleId) {
         <p>🛸 Acoplamiento: ${dockingDate}</p>
       </div>
       <div class="mission-actions">
-        <button class="btn btn-edit" onclick="editMission('${capsuleId}', ${index})">✏️</button>
-        <button class="btn btn-danger" onclick="deleteMission('${capsuleId}', ${index})">🗑️</button>
+        <button class="btn btn-edit" onclick="cEditMission('${capsuleId}', ${index})">✏️</button>
+        <button class="btn btn-danger" onclick="cDeleteMission('${capsuleId}', ${index})">🗑️</button>
       </div>
     </div>
   `;
@@ -432,7 +432,7 @@ document.getElementById("capsuleForm").addEventListener("submit", async (e) => {
 });
 
 // --------------------- MISIÓN CRUD ---------------------
-window.addMission = (capsuleId) => {
+window.cAddMission = (capsuleId) => {
   currentCapsuleId = capsuleId;
   editingMissionIndex = null;
   crewMembers = [];
@@ -444,7 +444,7 @@ window.addMission = (capsuleId) => {
   document.body.classList.add("modal-open");
 };
 
-window.editMission = (capsuleId, index) => {
+window.cEditMission = (capsuleId, index) => {
   currentCapsuleId = capsuleId;
   editingMissionIndex = index;
   const m = capsulesData.find(c => c.id === capsuleId).missions[index];
@@ -466,7 +466,7 @@ window.editMission = (capsuleId, index) => {
   document.body.classList.add("modal-open");
 };
 
-window.deleteMission = async (capsuleId, index) => {
+window.cDeleteMission = async (capsuleId, index) => {
   if (!confirm("¿Eliminar esta misión?")) return;
   try {
     const capsule = capsulesData.find(c => c.id === capsuleId);
