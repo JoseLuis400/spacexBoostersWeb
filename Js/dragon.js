@@ -90,10 +90,12 @@ function formatCounterDHMS(ms) {
 
 function sortMissionsByDate(missions) {
   return [...missions].sort((a, b) => {
-    if (isFlexibleDate(a.date) && isFlexibleDate(b.date)) return (a.date ?? "").localeCompare(b.date ?? "");
-    if (isFlexibleDate(a.date)) return 1;
-    if (isFlexibleDate(b.date)) return -1;
-    return new Date(a.date) - new Date(b.date);
+    const ta = tsToDate(a.launchDate)?.getTime() ?? null;
+    const tb = tsToDate(b.launchDate)?.getTime() ?? null;
+    if (ta && tb) return tb - ta;          // ambas tienen fecha → más nueva primero
+    if (ta) return -1;                     // solo a tiene fecha → a primero
+    if (tb) return 1;                      // solo b tiene fecha → b primero
+    return (b.date ?? "").localeCompare(a.date ?? ""); // fechas flexibles → más reciente primero
   });
 }
 
@@ -214,8 +216,8 @@ async function loadCapsulesData() {
       const sortedMissions = sortMissionsByDate(capsule.missions);
       const completed = sortedMissions.filter(m => !m.programado);
       const flights = completed.length;
-      const firstFlight = completed[0]?.launchDate ?? null;
-      const lastFlight = completed.at(-1)?.launchDate ?? null;
+      const firstFlight = completed.at(-1)?.launchDate ?? null;
+      const lastFlight = completed[0]?.launchDate ?? null;
 
       let avgDays = "N/A";
       const dates = completed.map(m => tsToDate(m.launchDate)?.getTime()).filter(Boolean);
