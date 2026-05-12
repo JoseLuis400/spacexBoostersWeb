@@ -5,41 +5,78 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin - SpaceX Boosters</title>
   <link rel="stylesheet" href="css/edit.css">
+  <link rel="stylesheet" href="css/edit-capsulas.css">
+  <link rel="shortcut icon" href="img/icon.png" type="image/x-icon">
 
-  <!-- Ocultar secciones inicialmente para evitar flash -->
-  <style>
-    #loginSection, #adminSection {
-      display: flex;
-    }
-  </style>
+  <!-- Open Graph / Embed -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="SpaceX Boosters">
+  <meta property="og:url" content="https://spacexboosters.netlify.app/editar">
+  <meta property="og:title" content="Panel de Administración — SpaceX Boosters">
+  <meta property="og:description" content="Panel de administración de SpaceX Boosters. Gestiona propulsores Falcon y cápsulas Dragon.">
+  <meta property="og:image" content="https://firebasestorage.googleapis.com/v0/b/spacexboosters.firebasestorage.app/o/img%2FB1090.jpg?alt=media&token=ab33b632-02e6-4fde-8d1f-a31f269c7574">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://spacexboosters.netlify.app/editar">
+  <meta name="twitter:title" content="Panel de Administración — SpaceX Boosters">
+  <meta name="twitter:description" content="Panel de administración de SpaceX Boosters. Gestiona propulsores Falcon y cápsulas Dragon.">
+  <meta name="twitter:image" content="https://firebasestorage.googleapis.com/v0/b/spacexboosters.firebasestorage.app/o/img%2FB1090.jpg?alt=media&token=ab33b632-02e6-4fde-8d1f-a31f269c7574">
+
+  <meta name="description" content="Panel de administración de SpaceX Boosters.">
+  <meta name="robots" content="noindex, nofollow">
 
   <script type="module">
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener("DOMContentLoaded", () => {
       const auth = getAuth();
-
       onAuthStateChanged(auth, (user) => {
         const loginSection = document.getElementById("loginSection");
         const adminSection = document.getElementById("adminSection");
-
         if (!user) {
-          // Usuario no logueado: cargamos CSS de login y mostramos login
-          const loginCss = document.createElement('link');
-          loginCss.rel = 'stylesheet';
-          loginCss.href = 'css/login.css';
+          const loginCss = document.createElement("link");
+          loginCss.rel = "stylesheet";
+          loginCss.href = "css/login.css";
           document.head.appendChild(loginCss);
-
           loginSection.style.display = "block";
           adminSection.style.display = "none";
         } else {
-          // Usuario logueado: mostramos admin, no cargamos login.css
           loginSection.style.display = "none";
           adminSection.style.display = "block";
         }
       });
     });
   </script>
+
+  <style>
+    #loginSection, #adminSection { display: flex; }
+
+    /* Tabs */
+    .admin-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 0;
+    }
+    .admin-tab {
+      padding: 0.6rem 1.4rem;
+      border: none;
+      background: none;
+      color: rgba(255,255,255,0.45);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .admin-tab:hover { color: rgba(255,255,255,0.8); }
+    .admin-tab.active { color: #fff; border-bottom-color: #00d9ff; }
+    .admin-tab-section { display: none; }
+    .admin-tab-section.active { display: block; }
+  </style>
 </head>
 <body>
 
@@ -57,7 +94,7 @@
     <button id="logoutBtn">Cerrar sesión</button>
   </div>
 
-  <!-- Fondo dinámico con imágenes aleatorias -->
+  <!-- Fondo dinámico -->
   <script>
     const backgrounds = [
       'https://spacexboosters.netlify.app/img2/B1094.jpg',
@@ -67,12 +104,10 @@
       'https://spacexboosters.netlify.app/img2/B1080.jpg',
       'https://spacexboosters.netlify.app/img2/B1067.jpg'
     ];
-
     function changeBackgroundRandom() {
-      const randomIndex = Math.floor(Math.random() * backgrounds.length);
-      document.body.style.setProperty('--bg-image', `url('${backgrounds[randomIndex]}')`);
+      const i = Math.floor(Math.random() * backgrounds.length);
+      document.body.style.setProperty('--bg-image', `url('${backgrounds[i]}')`);
     }
-
     setInterval(changeBackgroundRandom, 10000);
     changeBackgroundRandom();
   </script>
@@ -82,7 +117,7 @@
     <header>
       <div class="container">
         <h1>Panel de Administración</h1>
-        <p>Gestiona los propulsores y sus misiones</p>
+        <p>Gestiona propulsores y cápsulas Dragon</p>
         <a href="https://spacexboosters.netlify.app/" class="back-link">← Volver al sitio</a>
         <div id="update-info">
           Última actualización: <span id="last-update">Cargando...</span>
@@ -91,15 +126,33 @@
     </header>
 
     <main class="container admin-main">
-      <div class="admin-controls">
-        <button id="addBoosterBtn" class="btn btn-primary">+ Agregar Propulsor</button>
-        <button id="btn-actualizar" class="btn btn-primary">🕒 Actualizar Tiempo</button>
+
+      <!-- Tabs -->
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-tab="boosters">🚀 Propulsores</button>
+        <button class="admin-tab"        data-tab="capsules">🐉 Cápsulas Dragon</button>
       </div>
 
-      <div id="boostersAdmin" class="boosters-admin-grid"></div>
+      <!-- ========== SECCIÓN PROPULSORES ========== -->
+      <div id="tab-boosters" class="admin-tab-section active">
+        <div class="admin-controls">
+          <button id="addBoosterBtn" class="btn btn-primary">+ Agregar Propulsor</button>
+          <button id="btn-actualizar" class="btn btn-primary">🕒 Actualizar Tiempo</button>
+        </div>
+        <div id="boostersAdmin" class="boosters-admin-grid"></div>
+      </div>
+
+      <!-- ========== SECCIÓN CÁPSULAS ========== -->
+      <div id="tab-capsules" class="admin-tab-section">
+        <div class="admin-controls">
+          <button id="addCapsuleBtn" class="btn btn-primary">+ Agregar Cápsula</button>
+        </div>
+        <div id="capsulesAdmin" class="boosters-admin-grid"></div>
+      </div>
+
     </main>
 
-    <!-- Modal Agregar/Editar Propulsor -->
+    <!-- ===== Modal Propulsor ===== -->
     <div id="boosterModal" class="modal">
       <div class="modal-content admin-modal">
         <span class="close">&times;</span>
@@ -115,7 +168,7 @@
           </div>
           <div class="form-group">
             <label for="boosterDesc">Descripción:</label>
-            <input type="text" name="boosterDesc" id="boosterDesc">
+            <input type="text" id="boosterDesc">
             <small>Agregar/editar descripción de un propulsor.</small>
           </div>
           <div class="form-group">
@@ -158,7 +211,7 @@
             <input type="file" id="boosterImageFile" accept="image/*">
             <small>Si quieres reemplazar la imagen existente, sube otra.</small>
             <progress id="uploadProgress" value="0" max="100" style="width: 100%; display: none;"></progress>
-          </div>                   
+          </div>
           <div class="form-actions">
             <button type="submit" class="btn btn-primary">Guardar Propulsor</button>
             <button type="button" class="btn btn-secondary" id="cancelBoosterBtn">Cancelar</button>
@@ -167,7 +220,7 @@
       </div>
     </div>
 
-    <!-- Modal Agregar/Editar Misión -->
+    <!-- ===== Modal Misión Propulsor ===== -->
     <div id="missionModal" class="modal">
       <div class="modal-content admin-modal">
         <span class="close">&times;</span>
@@ -203,22 +256,18 @@
               <option value="LZ-40">LZ-40</option>
             </select>
           </div>
-
           <div class="form-group">
             <label for="missionLaunchPad">Plataforma de Lanzamiento:</label>
             <select id="missionLaunchPad" required>
-                <option value="SLC-40">SLC-40</option>
-                <option value="LC-39A">LC-39A</option>
-                <option value="SLC-4E">SLC-4E</option>
+              <option value="SLC-40">SLC-40</option>
+              <option value="LC-39A">LC-39A</option>
+              <option value="SLC-4E">SLC-4E</option>
             </select>
-        </div>
-        
+          </div>
           <div class="form-group checkbox-group">
             <label>
-              <input type="checkbox" id="missionProgramado">
-              Vuelo Programado (futuro)
-              <input type="checkbox" id="missionInFlight">
-              En Vuelo
+              <input type="checkbox" id="missionProgramado"> Vuelo Programado (futuro)
+              <input type="checkbox" id="missionInFlight"> En Vuelo
             </label>
           </div>
           <div class="form-actions">
@@ -228,10 +277,153 @@
         </form>
       </div>
     </div>
-  </div>
+
+    <!-- ===== Modal Cápsula ===== -->
+    <div id="capsuleModal" class="modal">
+      <div class="modal-content admin-modal">
+        <span class="close">&times;</span>
+        <h2 id="capsuleModalTitle">Agregar Cápsula</h2>
+        <form id="capsuleForm">
+          <div class="form-group">
+            <label for="capsuleId">ID de la Cápsula:</label>
+            <input type="text" id="capsuleId" required placeholder="C201">
+          </div>
+          <div class="form-group">
+            <label for="capsuleName">Nombre (opcional):</label>
+            <input type="text" id="capsuleName" placeholder="Endeavour">
+          </div>
+          <div class="form-group">
+            <label for="capsuleDesc">Descripción:</label>
+            <input type="text" id="capsuleDesc" placeholder="Descripción breve de la cápsula">
+          </div>
+          <div class="form-group">
+            <label for="capsuleType">Tipo:</label>
+            <select id="capsuleType" required>
+              <option value="crew">Crew Dragon</option>
+              <option value="cargo_v2">Cargo Dragon 2</option>
+              <option value="cargo_v1">Cargo Dragon 1</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="capsuleStatus">Estado:</label>
+            <select id="capsuleStatus" required>
+              <option value="active">Activo</option>
+              <option value="orbit">En órbita</option>
+              <option value="retired">Retirado</option>
+              <option value="destroyed">Destruido</option>
+              <option value="discarded">Desechado</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="capsuleImage">Imagen (URL o ruta):</label>
+            <input type="text" id="capsuleImage" placeholder="img/C201.jpg">
+          </div>
+          <div class="form-group">
+            <label for="capsuleImageFile">Subir imagen:</label>
+            <input type="file" id="capsuleImageFile" accept="image/*">
+            <small>Si subes una imagen sobreescribe la ruta de arriba.</small>
+            <progress id="cUploadProgress" value="0" max="100" style="width:100%; display:none;"></progress>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Guardar Cápsula</button>
+            <button type="button" class="btn btn-secondary" id="cancelCapsuleBtn">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ===== Modal Misión Cápsula ===== -->
+    <div id="cMissionModal" class="modal">
+      <div class="modal-content admin-modal">
+        <span class="close">&times;</span>
+        <h2 id="cMissionModalTitle">Agregar Misión</h2>
+        <form id="cMissionForm">
+          <div class="form-group">
+            <label for="cMissionName">Nombre de la misión:</label>
+            <input type="text" id="cMissionName" required placeholder="Crew-9">
+          </div>
+          <!-- Eventos de vuelo dinámicos -->
+          <div class="form-group">
+            <label>Eventos de vuelo:</label>
+            <div id="cDateEventBtns" class="date-event-btns">
+              <button type="button" class="btn btn-event" data-event="launch">🚀 Lanzamiento</button>
+              <button type="button" class="btn btn-event" data-event="docking">🔗 Acoplamiento</button>
+              <button type="button" class="btn btn-event" data-event="undocking">🔓 Desacoplamiento</button>
+              <button type="button" class="btn btn-event" data-event="splashdown">💧 Amerizaje</button>
+            </div>
+            <div id="cDateEventsContainer"></div>
+          </div>
+          <div class="form-group">
+            <label for="cMissionReturnDate">Regreso previsto (UTC):</label>
+            <input type="datetime-local" id="cMissionReturnDate">
+            <small>Opcional. Muestra un contador T- en la página.</small>
+          </div>
+          <div class="form-group">
+            <label for="cMissionDestination">Destino:</label>
+            <select id="cMissionDestination">
+              <option value="">— Sin especificar —</option>
+              <option value="ISS">Estación Espacial Internacional (ISS)</option>
+              <option value="LEO">Órbita Baja (LEO)</option>
+              <option value="Polar">Órbita Polar</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="cMissionSuccess">Resultado:</label>
+            <select id="cMissionSuccess">
+              <option value="null">Pendiente</option>
+              <option value="true">Éxito</option>
+              <option value="false">Fallo</option>
+            </select>
+          </div>
+          <div class="form-group checkbox-group">
+            <label>
+              <input type="checkbox" id="cMissionProgramado"> Misión programada (futura)
+            </label>
+            <label style="margin-left: 1rem;">
+              <input type="checkbox" id="cMissionInFlight"> En vuelo
+            </label>
+          </div>
+          <!-- Parche de misión -->
+          <div class="form-group">
+            <label for="cMissionPatch">Parche de misión (URL o ruta):</label>
+            <input type="text" id="cMissionPatch" placeholder="img/patches/crew9.png">
+          </div>
+          <div class="form-group">
+            <label for="cMissionPatchFile">Subir parche:</label>
+            <input type="file" id="cMissionPatchFile" accept="image/*">
+            <progress id="cPatchUploadProgress" value="0" max="100" style="width:100%;display:none;"></progress>
+          </div>
+          <!-- Tripulación -->
+          <div class="form-group">
+            <label>Tripulación:</label>
+            <div id="cCrewList" class="crew-list"></div>
+            <button type="button" class="btn add-mission-btn" id="cAddCrewBtn">+ Agregar tripulante</button>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Guardar Misión</button>
+            <button type="button" class="btn btn-secondary" id="cCancelMissionBtn">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div><!-- fin adminSection -->
+
+  <!-- Tab switching -->
+  <script>
+    document.querySelectorAll(".admin-tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".admin-tab").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".admin-tab-section").forEach(s => s.classList.remove("active"));
+        tab.classList.add("active");
+        document.getElementById("tab-" + tab.dataset.tab).classList.add("active");
+      });
+    });
+  </script>
 
   <!-- Scripts -->
   <script type="module" src="Js/edit.js"></script>
+  <script type="module" src="js/editcapsulas.js"></script>
   <script type="module" src="js/login.js"></script>
 
 </body>

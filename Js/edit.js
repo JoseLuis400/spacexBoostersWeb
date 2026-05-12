@@ -1,7 +1,7 @@
 //edit.js
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"
-import {  getFirestore,  collection,  getDocs,  doc,  setDoc,  updateDoc,  deleteDoc,  getDoc,} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"
+import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, getDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"
 
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
@@ -18,7 +18,7 @@ const firebaseConfig = {
   measurementId: "G-P27248GMWL",
 }
 
-const app = initializeApp(firebaseConfig)
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig)
 const db = getFirestore(app)
 
 const storage = getStorage(app);
@@ -28,26 +28,37 @@ let editingBoosterId = null
 let editingMissionIndex = null
 let currentBoosterId = null
 
+async function getImageURL(path) {
+  try {
+    if (!path) return null;
+    if (/^https?:\/\//i.test(path)) return path;
+    return await getDownloadURL(ref(storage, path));
+  } catch {
+    return null;
+  }
+}
+
 async function loadData() {
   try {
     const boostersCollection = collection(db, "boosters")
     const boostersSnapshot = await getDocs(boostersCollection)
 
-    boostersData = []
-
-    boostersSnapshot.forEach((doc) => {
+    const promises = boostersSnapshot.docs.map(async (doc) => {
       const data = doc.data()
-      boostersData.push({
+      const imageURL = await getImageURL(data.image)
+      return {
         id: doc.id,
         name: data.name,
         desc: data.desc || "",
         block: data.block,
         status: data.status,
         type: data.type,
-        image: data.image,
+        image: imageURL,
         missions: data.missions || [],
-      })
+      }
     })
+
+    boostersData = await Promise.all(promises)
 
     // Ordenar por número de booster
     boostersData.sort((a, b) => {
@@ -218,11 +229,13 @@ function createBoosterCard(booster) {
 
   const statusClass = booster.status.toLowerCase().replace(" ", "-")
   const vuelosRealizados = booster.missions.filter((m) => !m.programado).length
+  const hasScheduled = booster.missions.some((m) => m.programado)
+  const isInFlight = booster.missions.some((m) => m.inFlight)
 
   card.innerHTML = `
     <div class="card-content">
       <div class="admin-booster-header">
-        <h3>${booster.name}</h3>
+        <h3>${booster.name} ${isInFlight ? '<span class="admin-badge badge-inflight">🚀 En vuelo</span>' : hasScheduled ? '<span class="admin-badge badge-scheduled">🔔 Programado</span>' : ""}</h3>
         <div class="admin-booster-actions">
           <button class="btn btn-edit" onclick="editBooster('${booster.id}')">✏️ Editar</button>
           <button class="btn btn-danger" onclick="deleteBooster('${booster.id}')">🗑️ Eliminar</button>
@@ -366,6 +379,7 @@ document.getElementById("boosterForm").addEventListener("submit", async (e) => {
       status: document.getElementById("boosterStatus").value,
       image: imagePath,
       missions: [],
+      updatedAt: Timestamp.now(),
     };
 
     if (editingBoosterId) {
@@ -424,6 +438,7 @@ window.deleteMission = async (boosterId, missionIndex) => {
 
       await updateDoc(doc(db, "boosters", boosterId), {
         missions: booster.missions,
+        updatedAt: Timestamp.now(),
       })
 
       renderBoosters()
@@ -468,6 +483,7 @@ document.getElementById("missionForm").addEventListener("submit", async (e) => {
 
     await updateDoc(doc(db, "boosters", currentBoosterId), {
       missions: booster.missions,
+      updatedAt: Timestamp.now(),
     })
 
     document.getElementById("missionModal").style.display = "none"

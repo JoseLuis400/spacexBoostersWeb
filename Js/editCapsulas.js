@@ -36,12 +36,12 @@ const EVENT_CONFIG = {
     fields: `
       <div class="form-group">
         <label>Fecha/hora (UTC):</label>
-        <input type="datetime-local" id="missionLaunchDate">
+        <input type="datetime-local" id="cMissionLaunchDate">
         <small>La fecha de ordenación se deriva automáticamente.</small>
       </div>
       <div class="form-group">
         <label>Plataforma:</label>
-        <select id="missionLaunchPad">
+        <select id="cMissionLaunchPad">
           <option value="LC-39A">LC-39A</option>
           <option value="SLC-40">SLC-40</option>
           <option value="SLC-4E">SLC-4E</option>
@@ -53,11 +53,11 @@ const EVENT_CONFIG = {
     fields: `
       <div class="form-group">
         <label>Fecha/hora (UTC):</label>
-        <input type="datetime-local" id="missionDockingDate">
+        <input type="datetime-local" id="cMissionDockingDate">
       </div>
       <div class="form-group">
         <label>Puerto:</label>
-        <select id="missionDockingPort">
+        <select id="cMissionDockingPort">
           <option value="">— Sin especificar —</option>
           <option value="PMA-2 (forward)">PMA-2 (forward)</option>
           <option value="PMA-3 (zenith)">PMA-3 (zenith)</option>
@@ -71,7 +71,7 @@ const EVENT_CONFIG = {
     fields: `
       <div class="form-group">
         <label>Fecha/hora (UTC):</label>
-        <input type="datetime-local" id="missionUndocking">
+        <input type="datetime-local" id="cMissionUndocking">
       </div>`,
   },
   splashdown: {
@@ -79,7 +79,7 @@ const EVENT_CONFIG = {
     fields: `
       <div class="form-group">
         <label>Fecha/hora (UTC):</label>
-        <input type="datetime-local" id="missionSplashdown">
+        <input type="datetime-local" id="cMissionSplashdown">
       </div>`,
   },
 };
@@ -136,49 +136,12 @@ async function uploadFile(file, storagePath, progressEl) {
 const TYPE_LABELS = { crew: "Crew Dragon", cargo_v2: "Cargo Dragon 2", cargo_v1: "Cargo Dragon 1" };
 const STATUS_LABELS = { active: "Activo", orbit: "En órbita", retired: "Retirado", destroyed: "Destruido", discarded: "Desechado" };
 
-// --------------------- CONFIG ---------------------
-async function loadConfig() {
-  try {
-    const configDoc = await getDoc(doc(db, "data", "config"));
-    if (configDoc.exists()) {
-      const data = configDoc.data();
-      document.getElementById("last-update").textContent =
-        `${data.updateDate} • ${data.updateTime} UTC (por ${data.updatedBy ?? "?"})`;
-    }
-  } catch (e) {
-    document.getElementById("last-update").textContent = "Error al cargar";
-  }
-}
-
-async function updateConfigUTC() {
-  try {
-    const utc = getCurrentUTC();
-    const user = auth.currentUser;
-    let updatedBy = "Desconocido";
-    if (user) {
-      const usersDoc = await getDoc(doc(db, "data", "users"));
-      if (usersDoc.exists()) {
-        const ud = usersDoc.data()[user.uid];
-        if (ud?.name) updatedBy = ud.name;
-      }
-    }
-    await updateDoc(doc(db, "data", "config"), {
-      updateDate: utc.updateDate, updateTime: utc.updateTime, updatedBy,
-    });
-    document.getElementById("last-update").textContent =
-      `${utc.updateDate} • ${utc.updateTime} UTC (por ${updatedBy})`;
-  } catch (e) {
-    document.getElementById("last-update").textContent = "Error al actualizar";
-  }
-}
-
-document.getElementById("btn-actualizar").addEventListener("click", updateConfigUTC);
 
 // --------------------- EVENTOS DE VUELO ---------------------
 const ORDER = ["launch", "docking", "undocking", "splashdown"];
 
 function renderDateEvents() {
-  const container = document.getElementById("dateEventsContainer");
+  const container = document.getElementById("cDateEventsContainer");
   container.innerHTML = "";
 
   ORDER.filter(k => activeEvents.has(k)).forEach(key => {
@@ -217,36 +180,36 @@ function updateEventButtons() {
 const savedEventValues = {};
 function saveEventValues() {
   if (activeEvents.has("launch")) {
-    savedEventValues.launchDate = document.getElementById("missionLaunchDate")?.value ?? "";
-    savedEventValues.launchPad = document.getElementById("missionLaunchPad")?.value ?? "LC-39A";
+    savedEventValues.launchDate = document.getElementById("cMissionLaunchDate")?.value ?? "";
+    savedEventValues.launchPad = document.getElementById("cMissionLaunchPad")?.value ?? "LC-39A";
   }
   if (activeEvents.has("docking")) {
-    savedEventValues.dockingDate = document.getElementById("missionDockingDate")?.value ?? "";
-    savedEventValues.dockingPort = document.getElementById("missionDockingPort")?.value ?? "";
+    savedEventValues.dockingDate = document.getElementById("cMissionDockingDate")?.value ?? "";
+    savedEventValues.dockingPort = document.getElementById("cMissionDockingPort")?.value ?? "";
   }
   if (activeEvents.has("undocking")) {
-    savedEventValues.undocking = document.getElementById("missionUndocking")?.value ?? "";
+    savedEventValues.undocking = document.getElementById("cMissionUndocking")?.value ?? "";
   }
   if (activeEvents.has("splashdown")) {
-    savedEventValues.splashdown = document.getElementById("missionSplashdown")?.value ?? "";
+    savedEventValues.splashdown = document.getElementById("cMissionSplashdown")?.value ?? "";
   }
 }
 
 function restoreEventValues() {
   if (savedEventValues.launchDate !== undefined)
-    document.getElementById("missionLaunchDate")?.setAttribute("value", savedEventValues.launchDate);
-  if (savedEventValues.launchDate !== undefined && document.getElementById("missionLaunchDate"))
-    document.getElementById("missionLaunchDate").value = savedEventValues.launchDate;
-  if (savedEventValues.launchPad && document.getElementById("missionLaunchPad"))
-    document.getElementById("missionLaunchPad").value = savedEventValues.launchPad;
-  if (savedEventValues.dockingDate !== undefined && document.getElementById("missionDockingDate"))
-    document.getElementById("missionDockingDate").value = savedEventValues.dockingDate;
-  if (savedEventValues.dockingPort !== undefined && document.getElementById("missionDockingPort"))
-    document.getElementById("missionDockingPort").value = savedEventValues.dockingPort;
-  if (savedEventValues.undocking !== undefined && document.getElementById("missionUndocking"))
-    document.getElementById("missionUndocking").value = savedEventValues.undocking;
-  if (savedEventValues.splashdown !== undefined && document.getElementById("missionSplashdown"))
-    document.getElementById("missionSplashdown").value = savedEventValues.splashdown;
+    document.getElementById("cMissionLaunchDate")?.setAttribute("value", savedEventValues.launchDate);
+  if (savedEventValues.launchDate !== undefined && document.getElementById("cMissionLaunchDate"))
+    document.getElementById("cMissionLaunchDate").value = savedEventValues.launchDate;
+  if (savedEventValues.launchPad && document.getElementById("cMissionLaunchPad"))
+    document.getElementById("cMissionLaunchPad").value = savedEventValues.launchPad;
+  if (savedEventValues.dockingDate !== undefined && document.getElementById("cMissionDockingDate"))
+    document.getElementById("cMissionDockingDate").value = savedEventValues.dockingDate;
+  if (savedEventValues.dockingPort !== undefined && document.getElementById("cMissionDockingPort"))
+    document.getElementById("cMissionDockingPort").value = savedEventValues.dockingPort;
+  if (savedEventValues.undocking !== undefined && document.getElementById("cMissionUndocking"))
+    document.getElementById("cMissionUndocking").value = savedEventValues.undocking;
+  if (savedEventValues.splashdown !== undefined && document.getElementById("cMissionSplashdown"))
+    document.getElementById("cMissionSplashdown").value = savedEventValues.splashdown;
 }
 
 function clearEventValues(key) {
@@ -259,7 +222,7 @@ function clearEventValues(key) {
 }
 
 // Botones "Agregar"
-document.getElementById("dateEventBtns").addEventListener("click", e => {
+document.getElementById("cDateEventBtns").addEventListener("click", e => {
   const btn = e.target.closest(".btn-event");
   if (!btn) return;
   saveEventValues();
@@ -268,7 +231,7 @@ document.getElementById("dateEventBtns").addEventListener("click", e => {
 });
 
 // Botones "Eliminar" (delegados en el container)
-document.getElementById("dateEventsContainer").addEventListener("click", e => {
+document.getElementById("cDateEventsContainer").addEventListener("click", e => {
   const btn = e.target.closest(".date-event-remove");
   if (!btn) return;
   const key = btn.dataset.event;
@@ -335,11 +298,13 @@ function createCapsuleCard(capsule) {
   const completedMissions = capsule.missions.filter(m => !m.programado).length;
   const statusLabel = STATUS_LABELS[capsule.status] ?? capsule.status;
   const typeLabel = TYPE_LABELS[capsule.type] ?? capsule.type;
+  const hasScheduled = capsule.missions.some(m => m.programado);
+  const isInFlight = capsule.missions.some(m => !m.programado && (m.inFlight || (m.docking?.date && !m.undocking && !m.splashdown)));
 
   card.innerHTML = `
     <div class="card-content">
       <div class="admin-booster-header">
-        <h3>${capsule.id}${capsule.name ? ` — ${capsule.name}` : ""}</h3>
+        <h3>${capsule.id}${capsule.name ? ` — ${capsule.name}` : ""} ${isInFlight ? '<span class="admin-badge badge-inflight">🚀 En misión</span>' : hasScheduled ? '<span class="admin-badge badge-scheduled">🔔 Programado</span>' : ""}</h3>
         <div class="admin-booster-actions">
           <button class="btn btn-edit" onclick="editCapsule('${capsule.id}')">✏️ Editar</button>
           <button class="btn btn-danger" onclick="deleteCapsule('${capsule.id}')">🗑️ Eliminar</button>
@@ -432,7 +397,7 @@ document.getElementById("capsuleForm").addEventListener("submit", async (e) => {
     if (fileInput.files.length > 0) {
       const file = fileInput.files[0];
       const ext = file.name.split(".").pop();
-      imagePath = await uploadFile(file, `img/capsulas/${id}.${ext}`, document.getElementById("uploadProgress"));
+      imagePath = await uploadFile(file, `img/capsulas/${id}.${ext}`, document.getElementById("cUploadProgress"));
     }
 
     const data = {
@@ -443,6 +408,7 @@ document.getElementById("capsuleForm").addEventListener("submit", async (e) => {
       image: imagePath || null,
     };
 
+    data.updatedAt = Timestamp.now();
     if (editingCapsuleId) {
       const existing = capsulesData.find(c => c.id === editingCapsuleId);
       data.missions = existing.missions;
@@ -466,11 +432,11 @@ window.addMission = (capsuleId) => {
   currentCapsuleId = capsuleId;
   editingMissionIndex = null;
   crewMembers = [];
-  document.getElementById("missionModalTitle").textContent = "Agregar Misión";
-  document.getElementById("missionForm").reset();
+  document.getElementById("cMissionModalTitle").textContent = "Agregar Misión";
+  document.getElementById("cMissionForm").reset();
   resetMissionEvents();
   renderCrewList();
-  document.getElementById("missionModal").style.display = "block";
+  document.getElementById("cMissionModal").style.display = "block";
   document.body.classList.add("modal-open");
 };
 
@@ -479,20 +445,20 @@ window.editMission = (capsuleId, index) => {
   editingMissionIndex = index;
   const m = capsulesData.find(c => c.id === capsuleId).missions[index];
 
-  document.getElementById("missionModalTitle").textContent = "Editar Misión";
-  document.getElementById("missionName").value = m.name ?? "";
-  document.getElementById("missionReturnDate").value = m.returnDate ? fromTimestamp(m.returnDate) : "";
-  document.getElementById("missionDestination").value = m.destination ?? "";
-  document.getElementById("missionSuccess").value = m.success === null || m.success === undefined ? "null" : String(m.success);
-  document.getElementById("missionProgramado").checked = m.programado ?? false;
-  document.getElementById("missionInFlight").checked = m.inFlight ?? false;
-  document.getElementById("missionPatch").value = m.patch ?? "";
+  document.getElementById("cMissionModalTitle").textContent = "Editar Misión";
+  document.getElementById("cMissionName").value = m.name ?? "";
+  document.getElementById("cMissionReturnDate").value = m.returnDate ? fromTimestamp(m.returnDate) : "";
+  document.getElementById("cMissionDestination").value = m.destination ?? "";
+  document.getElementById("cMissionSuccess").value = m.success === null || m.success === undefined ? "null" : String(m.success);
+  document.getElementById("cMissionProgramado").checked = m.programado ?? false;
+  document.getElementById("cMissionInFlight").checked = m.inFlight ?? false;
+  document.getElementById("cMissionPatch").value = m.patch ?? "";
 
   crewMembers = m.crew ? m.crew.map(c => ({ ...c })) : [];
   renderCrewList();
   loadMissionEvents(m);
 
-  document.getElementById("missionModal").style.display = "block";
+  document.getElementById("cMissionModal").style.display = "block";
   document.body.classList.add("modal-open");
 };
 
@@ -501,7 +467,7 @@ window.deleteMission = async (capsuleId, index) => {
   try {
     const capsule = capsulesData.find(c => c.id === capsuleId);
     capsule.missions.splice(index, 1);
-    await updateDoc(doc(db, "capsulas", capsuleId), { missions: capsule.missions });
+    await updateDoc(doc(db, "capsulas", capsuleId), { missions: capsule.missions, updatedAt: Timestamp.now() });
     renderCapsules();
   } catch (e) {
     console.error(e);
@@ -509,48 +475,48 @@ window.deleteMission = async (capsuleId, index) => {
   }
 };
 
-document.getElementById("missionForm").addEventListener("submit", async (e) => {
+document.getElementById("cMissionForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const capsule = capsulesData.find(c => c.id === currentCapsuleId);
   const capsuleId = currentCapsuleId;
 
   // Parche: primero subir si hay archivo
-  let patchPath = document.getElementById("missionPatch").value.trim();
-  const patchFile = document.getElementById("missionPatchFile").files[0];
+  let patchPath = document.getElementById("cMissionPatch").value.trim();
+  const patchFile = document.getElementById("cMissionPatchFile").files[0];
   if (patchFile) {
     const ext = patchFile.name.split(".").pop();
-    const missionSlug = document.getElementById("missionName").value.trim().toLowerCase().replace(/\s+/g, "-");
+    const missionSlug = document.getElementById("cMissionName").value.trim().toLowerCase().replace(/\s+/g, "-");
     patchPath = await uploadFile(
       patchFile,
       `img/patches/${missionSlug}.${ext}`,
-      document.getElementById("patchUploadProgress")
+      document.getElementById("cPatchUploadProgress")
     );
   }
 
   const launchDateTs = activeEvents.has("launch")
-    ? toTimestamp(document.getElementById("missionLaunchDate")?.value)
+    ? toTimestamp(document.getElementById("cMissionLaunchDate")?.value)
     : null;
 
   const missionData = {
-    name: document.getElementById("missionName").value.trim(),
+    name: document.getElementById("cMissionName").value.trim(),
     date: launchDateTs ? dateStringFromTimestamp(launchDateTs) : "",
     launchDate: launchDateTs,
-    launchPad: activeEvents.has("launch") ? (document.getElementById("missionLaunchPad")?.value ?? null) : null,
+    launchPad: activeEvents.has("launch") ? (document.getElementById("cMissionLaunchPad")?.value ?? null) : null,
     docking: activeEvents.has("docking") ? {
-      date: toTimestamp(document.getElementById("missionDockingDate")?.value),
-      port: document.getElementById("missionDockingPort")?.value || null,
+      date: toTimestamp(document.getElementById("cMissionDockingDate")?.value),
+      port: document.getElementById("cMissionDockingPort")?.value || null,
     } : { date: null, port: null },
-    undocking: activeEvents.has("undocking") ? toTimestamp(document.getElementById("missionUndocking")?.value) : null,
-    splashdown: activeEvents.has("splashdown") ? toTimestamp(document.getElementById("missionSplashdown")?.value) : null,
-    returnDate: toTimestamp(document.getElementById("missionReturnDate").value),
-    destination: document.getElementById("missionDestination").value || null,
-    success: (() => { const v = document.getElementById("missionSuccess").value; return v === "null" ? null : v === "true"; })(),
+    undocking: activeEvents.has("undocking") ? toTimestamp(document.getElementById("cMissionUndocking")?.value) : null,
+    splashdown: activeEvents.has("splashdown") ? toTimestamp(document.getElementById("cMissionSplashdown")?.value) : null,
+    returnDate: toTimestamp(document.getElementById("cMissionReturnDate").value),
+    destination: document.getElementById("cMissionDestination").value || null,
+    success: (() => { const v = document.getElementById("cMissionSuccess").value; return v === "null" ? null : v === "true"; })(),
     patch: patchPath || null,
     crew: crewMembers.filter(c => c.name.trim()),
   };
 
-  if (document.getElementById("missionProgramado").checked) missionData.programado = true;
-  if (document.getElementById("missionInFlight").checked) missionData.inFlight = true;
+  if (document.getElementById("cMissionProgramado").checked) missionData.programado = true;
+  if (document.getElementById("cMissionInFlight").checked) missionData.inFlight = true;
 
   try {
     if (editingMissionIndex !== null) {
@@ -558,8 +524,8 @@ document.getElementById("missionForm").addEventListener("submit", async (e) => {
     } else {
       capsule.missions.push(missionData);
     }
-    await updateDoc(doc(db, "capsulas", capsuleId), { missions: capsule.missions });
-    document.getElementById("missionModal").style.display = "none";
+    await updateDoc(doc(db, "capsulas", capsuleId), { missions: capsule.missions, updatedAt: Timestamp.now() });
+    document.getElementById("cMissionModal").style.display = "none";
     document.body.classList.remove("modal-open");
     renderCapsules();
   } catch (e) {
@@ -569,13 +535,13 @@ document.getElementById("missionForm").addEventListener("submit", async (e) => {
 });
 
 // --------------------- TRIPULACIÓN ---------------------
-document.getElementById("addCrewBtn").addEventListener("click", () => {
+document.getElementById("cAddCrewBtn").addEventListener("click", () => {
   crewMembers.push({ name: "", role: "", image: "", imageFile: null });
   renderCrewList();
 });
 
 function renderCrewList() {
-  const container = document.getElementById("crewList");
+  const container = document.getElementById("cCrewList");
   if (crewMembers.length === 0) {
     container.innerHTML = '<p style="color:#888;font-size:0.85rem;">Sin tripulantes añadidos.</p>';
     return;
@@ -651,8 +617,8 @@ document.getElementById("cancelCapsuleBtn").addEventListener("click", () => {
   document.body.classList.remove("modal-open");
 });
 
-document.getElementById("cancelMissionBtn").addEventListener("click", () => {
-  document.getElementById("missionModal").style.display = "none";
+document.getElementById("cCancelMissionBtn").addEventListener("click", () => {
+  document.getElementById("cMissionModal").style.display = "none";
   document.body.classList.remove("modal-open");
 });
 
@@ -665,4 +631,3 @@ window.addEventListener("click", (e) => {
 
 // --------------------- INIT ---------------------
 loadData();
-loadConfig();
