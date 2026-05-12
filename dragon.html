@@ -52,8 +52,18 @@
   </nav>
 
   <script type="module">
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    onAuthStateChanged(getAuth(), user => {
+    const firebaseConfig = {
+      apiKey: "AIzaSyAU8I3PbYOrd-qCSGNX3nyF6WWg0oIhAS8",
+      authDomain: "spacexboosters.firebaseapp.com",
+      projectId: "spacexboosters",
+      storageBucket: "spacexboosters.firebasestorage.app",
+      messagingSenderId: "765621593899",
+      appId: "1:765621593899:web:5b0468efb8f63a85b9f3b0"
+    };
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    onAuthStateChanged(getAuth(app), user => {
       document.getElementById("nav-admin-link").style.display = user ? "flex" : "none";
     });
   </script>
