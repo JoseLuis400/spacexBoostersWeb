@@ -585,8 +585,14 @@ function renderCrewList() {
       <div class="crew-member-fields">
         <input type="text" placeholder="Nombre" value="${escapeHtml(member.name)}"
                oninput="updateCrewField(${i}, 'name', this.value)">
-        <input type="text" placeholder="Rol (Commander, Pilot…)" value="${escapeHtml(member.role)}"
-               oninput="updateCrewField(${i}, 'role', this.value)">
+        <select onchange="updateCrewField(${i}, 'role', this.value)">
+          <option value="">— Rol —</option>
+          <option value="Comandante"   ${member.role === "Comandante"   ? "selected" : ""}>Comandante</option>
+          <option value="Piloto"       ${member.role === "Piloto"       ? "selected" : ""}>Piloto</option>
+          <option value="Especialista" ${member.role === "Especialista" ? "selected" : ""}>Especialista</option>
+          <option value="Turista"      ${member.role === "Turista"      ? "selected" : ""}>Turista</option>
+          <option value="Desconocido"  ${member.role === "Desconocido"  ? "selected" : ""}>Desconocido</option>
+        </select>
         <input type="text" placeholder="URL imagen" value="${escapeHtml(member.image)}"
                oninput="updateCrewField(${i}, 'image', this.value)">
         <div class="crew-image-upload">

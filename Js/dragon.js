@@ -225,15 +225,16 @@ async function loadCapsulesData() {
         avgDays = Math.round(total / (dates.length - 1) / 86400000) + " días";
       }
 
-      // Vuelo libre total: suma de (launch→dock) + (undock→splashdown) por misión completada
+      // Vuelo libre total: (amerizaje - lanzamiento) - tiempo acoplado, por misión completada
       let totalFreeFlightMs = 0;
       completed.forEach(m => {
         const l = tsToDate(m.launchDate)?.getTime();
+        const s = tsToDate(m.splashdown)?.getTime();
+        if (!l || !s) return;
         const d = tsToDate(m.docking?.date)?.getTime();
         const u = tsToDate(m.undocking)?.getTime();
-        const s = tsToDate(m.splashdown)?.getTime();
-        if (l && d) totalFreeFlightMs += msDiff(d, l);
-        if (u && s) totalFreeFlightMs += msDiff(s, u);
+        const dockedMs = (d && u) ? (u - d) : 0;
+        totalFreeFlightMs += (s - l) - dockedMs;
       });
       const totalFreeFlight = totalFreeFlightMs > 0 ? formatDuration(totalFreeFlightMs) : null;
 
@@ -316,7 +317,7 @@ function createCapsuleCard(capsule) {
     <div class="booster-content">
       <h3 class="booster-name">${capsule.id}${capsule.name ? ` — ${capsule.name}` : ""}</h3>
       <span class="booster-status ${statusClass}">${statusText}</span>
-      <p class="booster-flights">Misiones: ${capsule.flights}</p>
+      ${capsule.flights > 0 ? `<p class="booster-flights">Misiones: ${capsule.flights}</p>` : ""}
       <p class="booster-first-flight">${lastFlightText}</p>
     </div>
     ${missionStatusHTML}
