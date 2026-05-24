@@ -30,6 +30,15 @@ let currentCapsuleId = null;
 let crewMembers = [];
 let activeEvents = new Set(); // "launch" | "docking" | "undocking" | "splashdown"
 
+function formatUpdatedAt(date) {
+  const pad = n => String(n).padStart(2, "0");
+  const d = `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
+  const t = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  const offset = -date.getTimezoneOffset() / 60;
+  const tz = `UTC${offset >= 0 ? "+" : ""}${offset}`;
+  return `${d}, ${t} ${tz}`;
+}
+
 const EVENT_CONFIG = {
   launch: {
     label: "Lanzamiento", icon: "🚀",
@@ -301,7 +310,7 @@ function createCapsuleCard(capsule) {
   const hasScheduled = capsule.missions.some(m => m.programado);
   const isInFlight = capsule.missions.some(m => !m.programado && (m.inFlight || (m.docking?.date && !m.undocking && !m.splashdown)));
   const updatedAt = capsule.updatedAt?.toDate
-    ? capsule.updatedAt.toDate().toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })
+    ? formatUpdatedAt(capsule.updatedAt.toDate())
     : null;
 
   card.innerHTML = `

@@ -28,6 +28,15 @@ let editingBoosterId = null
 let editingMissionIndex = null
 let currentBoosterId = null
 
+function formatUpdatedAt(date) {
+  const pad = n => String(n).padStart(2, "0");
+  const d = `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
+  const t = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  const offset = -date.getTimezoneOffset() / 60;
+  const tz = `UTC${offset >= 0 ? "+" : ""}${offset}`;
+  return `${d}, ${t} ${tz}`;
+}
+
 async function getImageURL(path) {
   try {
     if (!path) return null;
@@ -55,6 +64,7 @@ async function loadData() {
         type: data.type,
         image: imageURL,
         missions: data.missions || [],
+        updatedAt: data.updatedAt ?? null,
       }
     })
 
@@ -232,7 +242,7 @@ function createBoosterCard(booster) {
   const hasScheduled = booster.missions.some((m) => m.programado)
   const isInFlight = booster.missions.some((m) => m.inFlight)
   const updatedAt = booster.updatedAt?.toDate
-    ? booster.updatedAt.toDate().toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })
+    ? formatUpdatedAt(booster.updatedAt.toDate())
     : null
 
   card.innerHTML = `
