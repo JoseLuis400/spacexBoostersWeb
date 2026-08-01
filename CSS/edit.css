@@ -1244,6 +1244,25 @@ span.block {
   align-items: center;
 }
 
+.mission-number {
+  flex-shrink: 0;
+  align-self: flex-start;
+  min-width: 36px;
+  height: 26px;
+  padding: 0 8px;
+  margin-right: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(0, 217, 255, 0.15);
+  border: 1px solid rgba(0, 217, 255, 0.5);
+  color: #00d9ff;
+  font-weight: 700;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
 .mission-info {
   flex: 1;
 }

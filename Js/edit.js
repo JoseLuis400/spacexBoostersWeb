@@ -305,6 +305,7 @@ function createMissionItem(mission, index, boosterId) {
 
   return `
         <div class="mission-item">
+            <div class="mission-number" title="Vuelo Nº ${index + 1}">#${index + 1}</div>
             <div class="mission-info">
                 <p><strong>${mission.name}</strong> ${programadoBadge} ${inFlightBadge}</p>
                 <p>📅 ${formatMissionDate(mission.date)} | 🚀 ${mission.launchPad} | 🛬 ${mission.landing || "Desechado"}</p>
