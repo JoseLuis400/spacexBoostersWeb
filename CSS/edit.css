@@ -1235,13 +1235,62 @@ span.block {
 }
 
 .mission-item {
+  position: relative;
+  min-height: 64px;
   background: rgba(0, 0, 0, 0.3);
   padding: 0.75rem;
+  padding-right: 2.75rem;
+  border: 1px solid transparent;
   border-radius: 8px;
   margin-bottom: 0.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+/* Acciones sin caja: X roja (arriba dcha) y lápiz (abajo dcha) */
+.mission-delete,
+.mission-edit {
+  position: absolute;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.mission-delete {
+  top: 6px;
+  color: #ff4d4d;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.mission-delete:hover {
+  color: #ff1e1e;
+  transform: scale(1.2);
+}
+
+.mission-edit {
+  bottom: 6px;
+  color: #9aa4b2;
+}
+
+.mission-edit:hover {
+  color: #00d9ff;
+}
+
+.mission-edit svg {
+  width: 16px;
+  height: 16px;
+  display: block;
 }
 
 .mission-number {
@@ -1263,6 +1312,30 @@ span.block {
   line-height: 1;
 }
 
+/* Vuelo programado: borde y sombra animados en la tarjeta de misión */
+.mission-item.is-programado {
+  border-color: rgba(255, 165, 0, 0.7);
+  animation: missionProgramadoPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes missionProgramadoPulse {
+  0%, 100% {
+    border-color: rgba(255, 165, 0, 0.5);
+    box-shadow: 0 0 0 0 rgba(255, 165, 0, 0.3);
+  }
+  50% {
+    border-color: rgba(255, 165, 0, 1);
+    box-shadow: 0 0 12px 2px rgba(255, 165, 0, 0.55);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mission-item.is-programado {
+    animation: none;
+    box-shadow: 0 0 10px 1px rgba(255, 165, 0, 0.5);
+  }
+}
+
 .mission-info {
   flex: 1;
 }
@@ -1270,16 +1343,6 @@ span.block {
 .mission-info p {
   margin: 0.25rem 0;
   font-size: 0.85rem;
-}
-
-.mission-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.mission-actions button {
-  padding: 0.4rem 0.8rem;
-  font-size: 0.8rem;
 }
 
 .add-mission-btn {

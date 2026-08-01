@@ -301,19 +301,17 @@ function createBoosterCard(booster) {
 
 function createMissionItem(mission, index, boosterId) {
   const programadoBadge = mission.programado ? '<span style="color: #ffa500;">🔔 PROGRAMADO</span>' : ""
-  const inFlightBadge = mission.inFlight ? '<span style="color: #ffa500;">🚀 En vuelo</span>' : ""
+  const itemClass = mission.programado ? "mission-item is-programado" : "mission-item"
 
   return `
-        <div class="mission-item">
+        <div class="${itemClass}">
             <div class="mission-number" title="Vuelo Nº ${index + 1}">#${index + 1}</div>
             <div class="mission-info">
-                <p><strong>${mission.name}</strong> ${programadoBadge} ${inFlightBadge}</p>
+                <p><strong>${mission.name}</strong> ${programadoBadge}</p>
                 <p>📅 ${formatMissionDate(mission.date)} | 🚀 ${mission.launchPad} | 🛬 ${mission.landing || "Desechado"}</p>
             </div>
-            <div class="mission-actions">
-                <button class="btn btn-edit" onclick="editMission('${boosterId}', ${index})">✏️</button>
-                <button class="btn btn-danger" onclick="deleteMission('${boosterId}', ${index})">🗑️</button>
-            </div>
+            <button class="mission-delete" title="Eliminar misión" aria-label="Eliminar misión" onclick="deleteMission('${boosterId}', ${index})">✕</button>
+            <button class="mission-edit" title="Editar misión" aria-label="Editar misión" onclick="editMission('${boosterId}', ${index})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></button>
         </div>
     `
 }
@@ -450,7 +448,6 @@ window.editMission = (boosterId, missionIndex) => {
   document.getElementById("missionLanding").value = mission.landing || ""
   document.getElementById("missionLaunchPad").value = mission.launchPad
   document.getElementById("missionProgramado").checked = mission.programado || false
-  document.getElementById("missionInFlight").checked = mission.inFlight || false
 
   document.getElementById("missionModal").style.display = "block"
   document.body.classList.add("modal-open")
@@ -494,10 +491,6 @@ document.getElementById("missionForm").addEventListener("submit", async (e) => {
 
   if (document.getElementById("missionProgramado").checked) {
     missionData.programado = true
-  }
-
-  if (document.getElementById("missionInFlight").checked) {
-    missionData.inFlight = true
   }
 
   try {
