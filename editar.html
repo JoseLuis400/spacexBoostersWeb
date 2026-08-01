@@ -94,22 +94,38 @@
     <button id="logoutBtn">Cerrar sesión</button>
   </div>
 
-  <!-- Fondo dinámico -->
-  <script>
-    const backgrounds = [
-      'https://spacexboosters.netlify.app/img2/B1094.jpg',
-      'https://spacexboosters.netlify.app/img2/B1090.jpg',
-      'https://spacexboosters.netlify.app/img2/B1085.jpg',
-      'https://spacexboosters.netlify.app/img2/B1081.jpg',
-      'https://spacexboosters.netlify.app/img2/B1080.jpg',
-      'https://spacexboosters.netlify.app/img2/B1067.jpg'
-    ];
+  <!-- Fondo dinámico: imágenes reales resueltas desde Firebase Storage -->
+  <script type="module">
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAU8I3PbYOrd-qCSGNX3nyF6WWg0oIhAS8",
+      authDomain: "spacexboosters.firebaseapp.com",
+      projectId: "spacexboosters",
+      storageBucket: "spacexboosters.firebasestorage.app",
+      messagingSenderId: "347004633729",
+      appId: "1:347004633729:web:2953672e258f6a67814380",
+    };
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    const storage = getStorage(app);
+
+    // Propulsores con foto para el fondo del login (rutas estables en Storage).
+    const boosterImgs = ["B1094", "B1090", "B1085", "B1081", "B1080", "B1067", "B1073", "B1069", "B1088", "B1083"];
+
+    // Resolvemos las URLs una sola vez; ignoramos las que no existan.
+    const urls = [];
+    await Promise.all(boosterImgs.map(async (n) => {
+      try { urls.push(await getDownloadURL(ref(storage, `img/${n}.jpg`))); } catch (_) { }
+    }));
+
     function changeBackgroundRandom() {
-      const i = Math.floor(Math.random() * backgrounds.length);
-      document.body.style.setProperty('--bg-image', `url('${backgrounds[i]}')`);
+      if (!urls.length) return;
+      const i = Math.floor(Math.random() * urls.length);
+      document.body.style.setProperty('--bg-image', `url('${urls[i]}')`);
     }
-    setInterval(changeBackgroundRandom, 10000);
     changeBackgroundRandom();
+    setInterval(changeBackgroundRandom, 10000);
   </script>
 
   <!-- SECCIÓN ADMIN -->
@@ -204,7 +220,8 @@
           </div>
           <div class="form-group">
             <label for="boosterImage">Imagen (ruta):</label>
-            <input type="text" id="boosterImage" required placeholder="img/B1085.jpg">
+            <input type="text" id="boosterImage" placeholder="img/B1085.jpg">
+            <small>Opcional. Puedes dejarlo vacío o subir un archivo abajo.</small>
           </div>
           <div class="form-group">
             <label for="boosterImageFile">Imagen del Booster:</label>

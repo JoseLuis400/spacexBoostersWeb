@@ -616,6 +616,49 @@ body {
   color: inherit;
 }
 
+/* Cabecera del historial: título + filtros de vuelos */
+.flight-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.flight-history-head h3 {
+  margin-bottom: 0;
+}
+
+.flight-filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.flight-filter-btn {
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  border-radius: var(--border-radius-medium);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.flight-filter-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.flight-filter-btn.active {
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border-color: var(--accent);
+}
+
 .flight-item {
   background: var(--muted);
   padding: 1rem;

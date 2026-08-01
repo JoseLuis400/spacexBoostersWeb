@@ -290,9 +290,37 @@ function openModal(booster) {
 
     let flightHistoryHTML = "";
     if (booster.missions.length > 0) {
+        // Numeramos en orden cronológico (vuelo #1 = el más antiguo) pero mostramos
+        // de más reciente a más antiguo invirtiendo las filas ya numeradas.
+        const rowsHTML = booster.missions
+            .map((m, i) => {
+                const isProgramado = !!m.programado;
+                return `
+                        <tr class="flight-row${isProgramado ? " scheduled-flight" : ""}" data-flight-cat="${isProgramado ? "programado" : "realizado"}" id="${getMissionRowId(m)}">
+                            <td><strong>${i + 1}</strong></td>
+                            <td>${m.name}</td>
+                            <td>${formatDate(m.date)}</td>
+                            <td><span class="launch-platform ${getLaunchPadClass(m.launchPad)}">${m.launchPad || ""}</span></td>
+                            <td><span class="landing-platform ${getLandingClass(m.landing)}">${m.landing || "Desechado"}</span></td>
+                        </tr>`;
+            })
+            .reverse()
+            .join("");
+
+        // Los filtros solo aportan valor si hay vuelos programados que separar.
+        const hasProgramado = booster.missions.some(m => m.programado);
+        const filtersHTML = hasProgramado ? `
+                <div class="flight-filters">
+                    <button class="flight-filter-btn active" data-flight-filter="all">Todos</button>
+                    <button class="flight-filter-btn" data-flight-filter="realizado">Realizados</button>
+                    <button class="flight-filter-btn" data-flight-filter="programado">Programados</button>
+                </div>` : "";
+
         flightHistoryHTML = `
         <div class="flight-history">
-            <h3>Historial de Vuelos</h3>
+            <div class="flight-history-head">
+                <h3>Historial de Vuelos</h3>${filtersHTML}
+            </div>
             <table class="flight-details-table">
                 <thead>
                     <tr>
@@ -303,15 +331,7 @@ function openModal(booster) {
                         <th>Aterrizaje</th>
                     </tr>
                 </thead>
-                <tbody>
-                    ${booster.missions.map((m,i) => `
-                        <tr ${m.programado?'class="scheduled-flight"':""} id="${getMissionRowId(m)}">
-                            <td><strong>${i+1}</strong></td>
-                            <td>${m.name}</td>
-                            <td>${formatDate(m.date)}</td>
-                            <td><span class="launch-platform ${getLaunchPadClass(m.launchPad)}">${m.launchPad || ""}</span></td>
-                            <td><span class="landing-platform ${getLandingClass(m.landing)}">${m.landing || "Desechado"}</span></td>
-                        </tr>`).join("")}
+                <tbody>${rowsHTML}
                 </tbody>
             </table>
         </div>`;
@@ -344,6 +364,17 @@ function openModal(booster) {
         </div>
         ${flightHistoryHTML}
     `;
+
+    // Filtros del historial de vuelos (Todos / Realizados / Programados)
+    modalBody.querySelectorAll(".flight-filter-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const filter = btn.dataset.flightFilter;
+            modalBody.querySelectorAll(".flight-filter-btn").forEach(b => b.classList.toggle("active", b === btn));
+            modalBody.querySelectorAll(".flight-row").forEach(row => {
+                row.style.display = (filter === "all" || row.dataset.flightCat === filter) ? "" : "none";
+            });
+        });
+    });
 
     modal.style.display = "block";
     document.body.classList.add("modal-open");

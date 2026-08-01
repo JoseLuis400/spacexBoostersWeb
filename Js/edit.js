@@ -62,7 +62,8 @@ async function loadData() {
         block: data.block,
         status: data.status,
         type: data.type,
-        image: imageURL,
+        image: imageURL,            // URL resuelta (para mostrar la miniatura)
+        imagePath: data.image || "", // ruta original tal cual está en Firestore (img/B1085.jpg)
         missions: data.missions || [],
         updatedAt: data.updatedAt ?? null,
       }
@@ -325,7 +326,7 @@ window.editBooster = (boosterId) => {
   document.getElementById("boosterType").value = booster.type || ""
   document.getElementById("boosterBlock").value = `${booster.block}` || ""
   document.getElementById("boosterStatus").value = booster.status
-  document.getElementById("boosterImage").value = booster.image
+  document.getElementById("boosterImage").value = booster.imagePath
 
   document.getElementById("boosterModal").style.display = "block"
   document.body.classList.add("modal-open")
