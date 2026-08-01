@@ -48,6 +48,61 @@ function formatMissionDate(dateString) {
   return dateString;
 }
 
+// Estados: normalización y traducción (mismo criterio que la web pública)
+function normalizeStatus(estado) {
+  const map = {
+    active: "active", activo: "active",
+    retired: "retired", retirado: "retired",
+    destroyed: "destroyed", destruido: "destroyed",
+    discarded: "discarded", desechado: "discarded",
+    testing: "testing", "en pruebas": "testing",
+    development: "development", desarrollo: "development", "en desarrollo": "development",
+    unknown: "unknown", desconocido: "unknown",
+  };
+  const key = String(estado ?? "").toLowerCase().trim();
+  return map[key] || key;
+}
+
+function traducirEstado(estado) {
+  const estados = {
+    active: "Activo", retired: "Retirado", destroyed: "Destruido",
+    discarded: "Desechado", testing: "En Pruebas", development: "En Desarrollo",
+    unknown: "Desconocido",
+  };
+  return estados[normalizeStatus(estado)] || estado;
+}
+
+// Escapa texto libre antes de inyectarlo con innerHTML (evita XSS almacenado).
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (c) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+  ));
+}
+
+// Notificación "toast" (reemplaza a alert()); el tipo se deduce del mensaje.
+function showToast(message, type) {
+  if (!type) {
+    const m = String(message).toLowerCase();
+    type = m.includes("error") ? "error" : (m.includes("exito") || m.includes("éxito")) ? "success" : "info";
+  }
+  let container = document.getElementById("toastContainer");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toastContainer";
+    container.className = "toast-container";
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add("show"));
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 300);
+  }, 3200);
+}
+
 async function getImageURL(path) {
   try {
     if (!path) return null;
@@ -92,7 +147,7 @@ async function loadData() {
     renderBoosters()
   } catch (error) {
     console.error("Error cargando datos desde Firebase:", error)
-    alert("Error al cargar los datos desde Firebase")
+    showToast("Error al cargar los datos desde Firebase")
   }
 }
 
@@ -167,7 +222,7 @@ async function loadConfig() {
 function exportToCSV(boosterId) {
   const booster = boostersData.find((b) => b.id === boosterId);
   if (!booster || booster.missions.length === 0) {
-    alert("Este propulsor no tiene misiones para exportar");
+    showToast("Este propulsor no tiene misiones para exportar");
     return;
   }
 
@@ -175,7 +230,7 @@ function exportToCSV(boosterId) {
   let missionsCompleted = booster.missions.filter(m => !m.programado);
   
   if (missionsCompleted.length === 0) {
-    alert("Este propulsor no tiene misiones completadas para exportar");
+    showToast("Este propulsor no tiene misiones completadas para exportar");
     return;
   }
 
@@ -272,7 +327,6 @@ function createBoosterCard(booster) {
   const statusClass = booster.status.toLowerCase().replace(" ", "-")
   const vuelosRealizados = booster.missions.filter((m) => !m.programado).length
   const hasScheduled = booster.missions.some((m) => m.programado)
-  const isInFlight = booster.missions.some((m) => m.inFlight)
   const updatedAt = booster.updatedAt?.toDate
     ? formatUpdatedAt(booster.updatedAt.toDate())
     : null
@@ -280,17 +334,17 @@ function createBoosterCard(booster) {
   card.innerHTML = `
     <div class="card-content">
       <div class="admin-booster-header">
-        <h3>${booster.name} ${isInFlight ? '<span class="admin-badge badge-inflight">🚀 En vuelo</span>' : hasScheduled ? '<span class="admin-badge badge-scheduled">🔔 Programado</span>' : ""}</h3>
+        <h3>${escapeHtml(booster.name)} ${hasScheduled ? '<span class="admin-badge badge-scheduled">🔔 Programado</span>' : ""}</h3>
         <div class="admin-booster-actions">
           <button class="btn btn-edit" onclick="editBooster('${booster.id}')">✏️ Editar</button>
           <button class="btn btn-danger" onclick="deleteBooster('${booster.id}')">🗑️ Eliminar</button>
         </div>
       </div>
       <div class="admin-booster-info">
-        <p><strong>Descripción:</strong> ${booster.desc || "Sin datos"}</p>
-        <p><strong>Tipo:</strong> ${booster.type}</p>
+        <p><strong>Descripción:</strong> ${booster.desc ? escapeHtml(booster.desc) : "Sin datos"}</p>
+        <p><strong>Tipo:</strong> ${escapeHtml(booster.type)}</p>
         <p><strong>Block:</strong> ${booster.block || "N/A"}</p>
-        <p><strong>Estado:</strong> <span class="status-badge status-${statusClass}">${booster.status}</span></p>
+        <p><strong>Estado:</strong> <span class="status-badge status-${statusClass}">${traducirEstado(booster.status)}</span></p>
         <p><strong>Vuelos:</strong> ${vuelosRealizados}</p>
         ${updatedAt ? `<p class="admin-updated-at">🕐 Actualizado: ${updatedAt}</p>` : ""}
       </div>
@@ -328,7 +382,7 @@ function createMissionItem(mission, index, boosterId) {
         <div class="${itemClass}">
             <div class="mission-number" title="Vuelo Nº ${index + 1}">#${index + 1}</div>
             <div class="mission-info">
-                <p><strong>${mission.name}</strong> ${programadoBadge}</p>
+                <p><strong>${escapeHtml(mission.name)}</strong> ${programadoBadge}</p>
                 <p>📅 ${formatMissionDate(mission.date)} | 🚀 ${mission.launchPad} | 🛬 ${mission.landing || "Desechado"}</p>
             </div>
             <button class="mission-delete" title="Eliminar misión" aria-label="Eliminar misión" onclick="deleteMission('${boosterId}', ${index})">✕</button>
@@ -355,7 +409,7 @@ window.editBooster = (boosterId) => {
   document.getElementById("boosterDesc").value = booster.desc
   document.getElementById("boosterType").value = booster.type || ""
   document.getElementById("boosterBlock").value = `${booster.block}` || ""
-  document.getElementById("boosterStatus").value = booster.status
+  document.getElementById("boosterStatus").value = normalizeStatus(booster.status)
   document.getElementById("boosterImage").value = booster.imagePath
 
   document.getElementById("boosterModal").style.display = "block"
@@ -368,10 +422,10 @@ window.deleteBooster = async (boosterId) => {
       await deleteDoc(doc(db, "boosters", boosterId))
       boostersData = boostersData.filter((b) => b.id !== boosterId)
       renderBoosters()
-      alert("Propulsor eliminado exitosamente")
+      showToast("Propulsor eliminado exitosamente")
     } catch (error) {
       console.error("Error eliminando propulsor:", error)
-      alert("Error al eliminar el propulsor")
+      showToast("Error al eliminar el propulsor")
     }
   }
 }
@@ -403,7 +457,7 @@ document.getElementById("boosterForm").addEventListener("submit", async (e) => {
         },
         (error) => {
           console.error("Error subiendo imagen:", error);
-          alert("Error al subir la imagen");
+          showToast("Error al subir la imagen");
           progressBar.style.display = "none";
         },
         async () => {
@@ -431,10 +485,10 @@ document.getElementById("boosterForm").addEventListener("submit", async (e) => {
       const existingBooster = boostersData.find((b) => b.id === editingBoosterId);
       boosterData.missions = existingBooster.missions;
       await setDoc(doc(db, "boosters", editingBoosterId), boosterData);
-      alert("Propulsor actualizado exitosamente");
+      showToast("Propulsor actualizado exitosamente");
     } else {
       await setDoc(doc(db, "boosters", boosterId), boosterData);
-      alert("Propulsor creado exitosamente");
+      showToast("Propulsor creado exitosamente");
     }
 
     document.getElementById("boosterModal").style.display = "none";
@@ -442,7 +496,7 @@ document.getElementById("boosterForm").addEventListener("submit", async (e) => {
     await loadData();
   } catch (error) {
     console.error("Error al guardar propulsor o subir imagen:", error);
-    alert("Error al guardar el propulsor o subir la imagen");
+    showToast("Error al guardar el propulsor o subir la imagen");
   }
 });
 
@@ -486,10 +540,10 @@ window.deleteMission = async (boosterId, missionIndex) => {
       })
 
       renderBoosters()
-      alert("Misión eliminada exitosamente")
+      showToast("Misión eliminada exitosamente")
     } catch (error) {
       console.error("Error eliminando misión:", error)
-      alert("Error al eliminar la misión")
+      showToast("Error al eliminar la misión")
     }
   }
 }
@@ -529,10 +583,10 @@ document.getElementById("missionForm").addEventListener("submit", async (e) => {
     document.getElementById("missionModal").style.display = "none"
     document.body.classList.remove("modal-open")
     renderBoosters()
-    alert("Misión guardada exitosamente")
+    showToast("Misión guardada exitosamente")
   } catch (error) {
     console.error("Error guardando misión:", error)
-    alert("Error al guardar la misión")
+    showToast("Error al guardar la misión")
   }
 })
 
@@ -558,6 +612,17 @@ window.addEventListener("click", (e) => {
     e.target.style.display = "none"
     document.body.classList.remove("modal-open")
   }
+})
+
+// Cerrar cualquier modal abierto con la tecla Escape
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return
+  document.querySelectorAll(".modal").forEach((m) => {
+    if (m.style.display === "block") {
+      m.style.display = "none"
+      document.body.classList.remove("modal-open")
+    }
+  })
 })
 
 // Filtros (Todos / Activos / Programados) y buscador del panel de propulsores

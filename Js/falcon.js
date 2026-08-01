@@ -56,16 +56,39 @@ function sortMissionsByDate(missions) {
     });
 }
 
+// Normaliza cualquier variante de estado (inglés/español, mayúsculas) a una clave canónica.
+function normalizeStatus(estado) {
+    const map = {
+        active: "active", activo: "active",
+        retired: "retired", retirado: "retired",
+        destroyed: "destroyed", destruido: "destroyed",
+        discarded: "discarded", desechado: "discarded",
+        testing: "testing", "en pruebas": "testing",
+        development: "development", desarrollo: "development", "en desarrollo": "development",
+        unknown: "unknown", desconocido: "unknown",
+    };
+    const key = String(estado ?? "").toLowerCase().trim();
+    return map[key] || key;
+}
+
 function traducirEstado(estado) {
     const estados = {
         active: "Activo",
         retired: "Retirado",
         destroyed: "Destruido",
-        testing: "En Pruebas",
-        unknown: "Desconocido",
         discarded: "Desechado",
+        testing: "En Pruebas",
+        development: "En Desarrollo",
+        unknown: "Desconocido",
     };
-    return estados[estado.toLowerCase()] || estado;
+    return estados[normalizeStatus(estado)] || estado;
+}
+
+// Escapa texto libre antes de inyectarlo con innerHTML (evita XSS almacenado).
+function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (c) => (
+        { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+    ));
 }
 
 function getLandingClass(landing) {
@@ -199,13 +222,15 @@ function setActiveFilter(filter) {
     currentFilter = filter;
 }
 
+function boostersForFilter(filter) {
+    if (filter === "all") return [...boostersData];
+    if (filter === "scheduled") return boostersData.filter(hasScheduledFlight);
+    if (filter === "testing") return boostersData.filter(b => ["testing", "development"].includes(normalizeStatus(b.status)));
+    return boostersData.filter(b => normalizeStatus(b.status) === filter);
+}
+
 function filterBoosters(filter) {
-    if (filter === "all") filteredBoosters = [...boostersData];
-    else if (filter === "discarded") filteredBoosters = boostersData.filter(b => b.status === "discarded" || b.status === "Desechado");
-    else if (filter === "retired") filteredBoosters = boostersData.filter(b => b.status === "retired" || b.status === "Retirado");
-    else if (filter === "destroyed") filteredBoosters = boostersData.filter(b => b.status === "destroyed" || b.status === "Destruido");
-    else if (filter === "scheduled") filteredBoosters = boostersData.filter(hasScheduledFlight);
-    else filteredBoosters = boostersData.filter(b => b.status === filter);
+    filteredBoosters = boostersForFilter(filter);
     renderBoosters();
 }
 
@@ -235,12 +260,12 @@ function createBoosterCard(booster) {
     card.innerHTML = `
         ${typeof booster.block === "string" ? `<span class="block">Block ${booster.block || "N/A"}</span>` : ""}
         <div class="booster-image">
-            <img src="${booster.image}" alt="${booster.name}" loading="lazy" 
+            <img src="${booster.image}" alt="${escapeHtml(booster.name)}" loading="lazy"
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <div class="altImage">${booster.name}</div>
+            <div class="altImage">${escapeHtml(booster.name)}</div>
         </div>
         <div class="booster-content">
-            <h3 class="booster-name">${booster.name}</h3>
+            <h3 class="booster-name">${escapeHtml(booster.name)}</h3>
             <span class="booster-type ${typeClass}">${typeText}</span>
             <span class="booster-status ${statusClass}">${statusText}</span>
             <p class="booster-flights">Vuelos realizados: ${booster.flights}</p>
@@ -296,9 +321,9 @@ function openModal(booster) {
             .map((m, i) => {
                 const isProgramado = !!m.programado;
                 return `
-                        <tr class="flight-row${isProgramado ? " scheduled-flight" : ""}" data-flight-cat="${isProgramado ? "programado" : "realizado"}" id="${getMissionRowId(m)}">
+                        <tr class="flight-row ${getMissionRowId(m)}${isProgramado ? " scheduled-flight" : ""}" data-flight-cat="${isProgramado ? "programado" : "realizado"}">
                             <td><strong>${i + 1}</strong></td>
-                            <td>${m.name}</td>
+                            <td>${escapeHtml(m.name)}</td>
                             <td>${formatDate(m.date)}</td>
                             <td><span class="launch-platform ${getLaunchPadClass(m.launchPad)}">${m.launchPad || ""}</span></td>
                             <td><span class="landing-platform ${getLandingClass(m.landing)}">${m.landing || "Desechado"}</span></td>
@@ -340,16 +365,16 @@ function openModal(booster) {
     }
     let descripcion;
     if(booster.desc) {
-        descripcion = `<div class="booster-description"><span>Descripción:</span> ${booster.desc}</div>`
+        descripcion = `<div class="booster-description"><span>Descripción:</span> ${escapeHtml(booster.desc)}</div>`
     } else {
         descripcion = ``
     }
 
     modalBody.innerHTML = `
         <div class="modal-header">
-            <img src="${booster.image}" alt="${booster.name}" class="modal-image" loading="lazy" 
+            <img src="${booster.image}" alt="${escapeHtml(booster.name)}" class="modal-image" loading="lazy"
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <h2 class="modal-title">${booster.name}</h2>
+            <h2 class="modal-title">${escapeHtml(booster.name)}</h2>
             ${hasScheduledFlight(booster)?'<span class="scheduled-badge">VUELO PROGRAMADO</span>':""}
             ${hasInFlight(booster)?'<span class="scheduled-badge">EN VUELO</span>':""}
             <span class="booster-type ${typeClass}">${typeText}</span>
@@ -405,12 +430,7 @@ function setupEventListeners() {
     const searchInput = document.getElementById("search-input");
     searchInput.addEventListener("input", () => {
         const query = searchInput.value.toLowerCase().trim();
-        const base = currentFilter === "all" ? boostersData
-            : currentFilter === "discarded" ? boostersData.filter(b => b.status === "discarded" || b.status === "Desechado")
-            : currentFilter === "retired" ? boostersData.filter(b => b.status === "retired" || b.status === "Retirado")
-            : currentFilter === "destroyed" ? boostersData.filter(b => b.status === "destroyed" || b.status === "Destruido")
-            : currentFilter === "scheduled" ? boostersData.filter(hasScheduledFlight)
-            : boostersData.filter(b => b.status === currentFilter);
+        const base = boostersForFilter(currentFilter);
         filteredBoosters = query ? base.filter(b => b.name.toLowerCase().includes(query)) : base;
         renderBoosters();
     });
@@ -435,14 +455,14 @@ function animateCounter(el, target, duration = 800) {
 
 function updateStats() {
     const totalBoosters = boostersData.length;
-    const activeBoosters = boostersData.filter(b => b.status === "active").length;
+    const activeBoosters = boostersData.filter(b => normalizeStatus(b.status) === "active").length;
     const noActiveBoosters = totalBoosters - activeBoosters;
     let totalFlights = 0;
     boostersData.forEach(b => totalFlights += b.flights);
-    const retired = boostersData.filter(b => b.status === "retired" || b.status === "Retirado").length;
-    const destroyed = boostersData.filter(b => b.status === "destroyed" || b.status === "Destruido").length;
-    const discarded = boostersData.filter(b => b.status === "discarded" || b.status === "Desechado").length;
-    const testing = boostersData.filter(b => b.status === "testing" || b.status === "En pruebas" || b.status === "Desarrollo").length;
+    const retired = boostersData.filter(b => normalizeStatus(b.status) === "retired").length;
+    const destroyed = boostersData.filter(b => normalizeStatus(b.status) === "destroyed").length;
+    const discarded = boostersData.filter(b => normalizeStatus(b.status) === "discarded").length;
+    const testing = boostersData.filter(b => ["testing", "development"].includes(normalizeStatus(b.status))).length;
 
     animateCounter(totalBoostersEl, totalBoosters);
     animateCounter(activeBoostersEl, activeBoosters);

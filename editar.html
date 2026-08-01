@@ -84,8 +84,8 @@
   <div id="loginSection">
     <a href="https://spacexboosters.netlify.app/" class="back-link">← Volver al sitio</a>
     <h3 style="text-align: center; padding-bottom: 25px;">Iniciar sesión</h3>
-    <input type="email" id="loginEmail" placeholder="Email">
-    <input type="password" id="loginPassword" placeholder="Contraseña">
+    <input type="email" id="loginEmail" placeholder="Email" aria-label="Email" autocomplete="email">
+    <input type="password" id="loginPassword" placeholder="Contraseña" aria-label="Contraseña" autocomplete="current-password">
     <button id="loginBtn">Iniciar sesión</button>
   </div>
 
@@ -159,7 +159,7 @@
           <button class="admin-filter-btn active" data-filter="all">Todos</button>
           <button class="admin-filter-btn" data-filter="active">Activos</button>
           <button class="admin-filter-btn" data-filter="scheduled">Programados</button>
-          <input type="text" id="boosterSearch" class="admin-search" placeholder="Buscar propulsor...">
+          <input type="text" id="boosterSearch" class="admin-search" placeholder="Buscar propulsor..." aria-label="Buscar propulsor">
         </div>
         <div id="boostersAdmin" class="boosters-admin-grid"></div>
       </div>
@@ -217,11 +217,11 @@
             <label for="boosterStatus">Estado:</label>
             <select id="boosterStatus" required>
               <option value="active">Activo</option>
-              <option value="Retirado">Retirado</option>
-              <option value="Destruido">Destruido</option>
-              <option value="Desechado">Desechado</option>
+              <option value="retired">Retirado</option>
+              <option value="destroyed">Destruido</option>
+              <option value="discarded">Desechado</option>
               <option value="testing">En Pruebas</option>
-              <option value="desarrollo">En desarrollo</option>
+              <option value="development">En desarrollo</option>
             </select>
           </div>
           <div class="form-group">
