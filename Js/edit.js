@@ -27,6 +27,7 @@ let boostersData = []
 let editingBoosterId = null
 let editingMissionIndex = null
 let currentBoosterId = null
+let currentBoosterFilter = "all"
 
 function formatUpdatedAt(date) {
   const pad = n => String(n).padStart(2, "0");
@@ -228,17 +229,37 @@ function exportToCSV(boosterId) {
 window.exportToCSV = exportToCSV;
 // ======================================================
 
+function boosterHasScheduled(booster) {
+  return (booster.missions || []).some((m) => m.programado)
+}
+
+function getVisibleBoosters() {
+  const query = (document.getElementById("boosterSearch")?.value || "").toLowerCase().trim()
+  let list = boostersData
+
+  if (currentBoosterFilter === "active") list = list.filter((b) => b.status === "active")
+  else if (currentBoosterFilter === "scheduled") list = list.filter(boosterHasScheduled)
+
+  if (query) list = list.filter((b) => (b.name || b.id || "").toLowerCase().includes(query))
+
+  return list
+}
+
 function renderBoosters() {
   const container = document.getElementById("boostersAdmin")
   container.innerHTML = ""
 
-  if (boostersData.length === 0) {
-    container.innerHTML =
-      '<div style="text-align: center; padding: 2rem; color: #888;">No hay propulsores. Agrega uno nuevo.</div>'
+  const visible = getVisibleBoosters()
+
+  if (visible.length === 0) {
+    const msg = boostersData.length === 0
+      ? "No hay propulsores. Agrega uno nuevo."
+      : "No hay propulsores que coincidan con el filtro o la búsqueda."
+    container.innerHTML = `<div style="text-align: center; padding: 2rem; color: #888;">${msg}</div>`
     return
   }
 
-  boostersData.forEach((booster) => {
+  visible.forEach((booster) => {
     const card = createBoosterCard(booster)
     container.appendChild(card)
   })
@@ -538,6 +559,18 @@ window.addEventListener("click", (e) => {
     document.body.classList.remove("modal-open")
   }
 })
+
+// Filtros (Todos / Activos / Programados) y buscador del panel de propulsores
+document.querySelectorAll(".admin-filter-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".admin-filter-btn").forEach((b) => b.classList.remove("active"))
+    btn.classList.add("active")
+    currentBoosterFilter = btn.dataset.filter
+    renderBoosters()
+  })
+})
+
+document.getElementById("boosterSearch")?.addEventListener("input", renderBoosters)
 
 loadData()
 loadConfig()

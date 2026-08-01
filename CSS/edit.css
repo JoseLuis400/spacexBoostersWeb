@@ -1234,6 +1234,58 @@ span.block {
   background: rgba(0, 217, 255, 0.7);
 }
 
+/* Filtros y buscador del panel de propulsores */
+.admin-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.admin-filter-btn {
+  padding: 0.5rem 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.admin-filter-btn:hover {
+  color: #fff;
+  border-color: rgba(0, 217, 255, 0.5);
+}
+
+.admin-filter-btn.active {
+  background: #00d9ff;
+  border-color: #00d9ff;
+  color: #001b21;
+}
+
+.admin-search {
+  margin-left: auto;
+  min-width: 220px;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.25);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.admin-search::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.admin-search:focus {
+  outline: none;
+  border-color: #00d9ff;
+}
+
 .mission-item {
   position: relative;
   min-height: 64px;
