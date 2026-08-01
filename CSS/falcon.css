@@ -616,47 +616,22 @@ body {
   color: inherit;
 }
 
-/* Cabecera del historial: título + filtros de vuelos */
-.flight-history-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.flight-history-head h3 {
-  margin-bottom: 0;
-}
-
-.flight-filters {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.flight-filter-btn {
-  padding: 0.35rem 0.9rem;
-  border: 1px solid var(--border);
-  background: var(--background);
-  color: var(--foreground);
-  border-radius: var(--border-radius-medium);
+/* Historial de vuelos: cabeceras de columna ordenables */
+.flight-details-table th.sortable {
   cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
+  user-select: none;
+  white-space: nowrap;
+  transition: color 0.15s ease;
 }
 
-.flight-filter-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+.flight-details-table th.sortable:hover,
+.flight-details-table th.sorted {
+  color: var(--foreground);
+  text-decoration: underline;
 }
 
-.flight-filter-btn.active {
-  background: var(--accent);
-  color: var(--accent-foreground);
-  border-color: var(--accent);
+.sort-ind {
+  font-size: 0.8em;
 }
 
 .flight-item {

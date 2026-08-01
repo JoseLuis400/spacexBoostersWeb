@@ -314,50 +314,26 @@ function openModal(booster) {
     const typeText = getBoosterType(booster.type);
 
     let flightHistoryHTML = "";
+    let flightsForSort = [];
     if (booster.missions.length > 0) {
-        // Numeramos en orden cronológico (vuelo #1 = el más antiguo) pero mostramos
-        // de más reciente a más antiguo invirtiendo las filas ya numeradas.
-        const rowsHTML = booster.missions
-            .map((m, i) => {
-                const isProgramado = !!m.programado;
-                return `
-                        <tr class="flight-row ${getMissionRowId(m)}${isProgramado ? " scheduled-flight" : ""}" data-flight-cat="${isProgramado ? "programado" : "realizado"}">
-                            <td><strong>${i + 1}</strong></td>
-                            <td>${escapeHtml(m.name)}</td>
-                            <td>${formatDate(m.date)}</td>
-                            <td><span class="launch-platform ${getLaunchPadClass(m.launchPad)}">${m.launchPad || ""}</span></td>
-                            <td><span class="landing-platform ${getLandingClass(m.landing)}">${m.landing || "Desechado"}</span></td>
-                        </tr>`;
-            })
-            .reverse()
-            .join("");
-
-        // Los filtros solo aportan valor si hay vuelos programados que separar.
-        const hasProgramado = booster.missions.some(m => m.programado);
-        const filtersHTML = hasProgramado ? `
-                <div class="flight-filters">
-                    <button class="flight-filter-btn active" data-flight-filter="all">Todos</button>
-                    <button class="flight-filter-btn" data-flight-filter="realizado">Realizados</button>
-                    <button class="flight-filter-btn" data-flight-filter="programado">Programados</button>
-                </div>` : "";
+        // Numeración cronológica (vuelo #1 = el más antiguo). El orden de la tabla se
+        // controla pinchando las cabeceras; por defecto, del más reciente al más antiguo.
+        flightsForSort = booster.missions.map((m, i) => ({ ...m, num: i + 1 }));
 
         flightHistoryHTML = `
         <div class="flight-history">
-            <div class="flight-history-head">
-                <h3>Historial de Vuelos</h3>${filtersHTML}
-            </div>
+            <h3>Historial de Vuelos</h3>
             <table class="flight-details-table">
                 <thead>
                     <tr>
-                        <th>Vuelo #</th>
+                        <th class="sortable" data-sort="num" title="Ordenar por nº de vuelo">Vuelo #<span class="sort-ind"></span></th>
                         <th>Misión</th>
-                        <th>Fecha</th>
-                        <th>Plataforma</th>
-                        <th>Aterrizaje</th>
+                        <th class="sortable" data-sort="date" title="Ordenar por fecha">Fecha<span class="sort-ind"></span></th>
+                        <th class="sortable" data-sort="launchPad" title="Ordenar por plataforma">Plataforma<span class="sort-ind"></span></th>
+                        <th class="sortable" data-sort="landing" title="Ordenar por aterrizaje">Aterrizaje<span class="sort-ind"></span></th>
                     </tr>
                 </thead>
-                <tbody>${rowsHTML}
-                </tbody>
+                <tbody id="flight-tbody"></tbody>
             </table>
         </div>`;
     } else {
@@ -390,16 +366,56 @@ function openModal(booster) {
         ${flightHistoryHTML}
     `;
 
-    // Filtros del historial de vuelos (Todos / Realizados / Programados)
-    modalBody.querySelectorAll(".flight-filter-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const filter = btn.dataset.flightFilter;
-            modalBody.querySelectorAll(".flight-filter-btn").forEach(b => b.classList.toggle("active", b === btn));
-            modalBody.querySelectorAll(".flight-row").forEach(row => {
-                row.style.display = (filter === "all" || row.dataset.flightCat === filter) ? "" : "none";
+    // Ordenación del historial de vuelos pinchando las cabeceras de columna
+    const flightTbody = modalBody.querySelector("#flight-tbody");
+    if (flightTbody) {
+        let sortKey = "num";
+        let sortDir = "desc"; // por defecto: más reciente primero
+        const comparators = {
+            num: (a, b) => a.num - b.num,
+            date: (a, b) => String(a.date).localeCompare(String(b.date)),
+            launchPad: (a, b) => String(a.launchPad || "").localeCompare(String(b.launchPad || "")),
+            landing: (a, b) => String(a.landing || "Desechado").localeCompare(String(b.landing || "Desechado")),
+        };
+        const rowHtml = (m) => `
+            <tr class="flight-row ${getMissionRowId(m)}${m.programado ? " scheduled-flight" : ""}">
+                <td><strong>${m.num}</strong></td>
+                <td>${escapeHtml(m.name)}</td>
+                <td>${formatDate(m.date)}</td>
+                <td><span class="launch-platform ${getLaunchPadClass(m.launchPad)}">${m.launchPad || ""}</span></td>
+                <td><span class="landing-platform ${getLandingClass(m.landing)}">${m.landing || "Desechado"}</span></td>
+            </tr>`;
+        const renderRows = () => {
+            const sorted = [...flightsForSort].sort((a, b) => {
+                const r = comparators[sortKey](a, b);
+                return sortDir === "asc" ? r : -r;
+            });
+            flightTbody.innerHTML = sorted.map(rowHtml).join("");
+            modalBody.querySelectorAll(".flight-details-table th.sortable").forEach(th => {
+                const ind = th.querySelector(".sort-ind");
+                if (th.dataset.sort === sortKey) {
+                    th.classList.add("sorted");
+                    ind.textContent = sortDir === "asc" ? " ▲" : " ▼";
+                } else {
+                    th.classList.remove("sorted");
+                    ind.textContent = "";
+                }
+            });
+        };
+        modalBody.querySelectorAll(".flight-details-table th.sortable").forEach(th => {
+            th.addEventListener("click", () => {
+                const key = th.dataset.sort;
+                if (sortKey === key) {
+                    sortDir = sortDir === "asc" ? "desc" : "asc";
+                } else {
+                    sortKey = key;
+                    sortDir = (key === "num" || key === "date") ? "desc" : "asc";
+                }
+                renderRows();
             });
         });
-    });
+        renderRows();
+    }
 
     modal.style.display = "block";
     document.body.classList.add("modal-open");
