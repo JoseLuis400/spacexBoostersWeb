@@ -101,6 +101,23 @@ function getLandingClass(landing) {
     return "";
 }
 
+// Iconos propios (heredan el color de la píldora vía currentColor)
+const LANDING_ICONS = {
+    // Barcaza (droneship): cubierta con la marca de aterrizaje sobre el agua
+    droneship: `<svg class="landing-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 6.8h15l-1.15 5a1.15 1.15 0 0 1-1.12.9H6.77a1.15 1.15 0 0 1-1.12-.9L4.5 6.8z"/><path d="M9.1 11.5 15.2 7.2"/><path d="M9.9 8l3.9 3.5"/><path d="M3 15c1.5 0 1.5 1.3 3 1.3s1.5-1.3 3-1.3 1.5 1.3 3 1.3 1.5-1.3 3-1.3 1.5 1.3 3 1.3"/><path d="M3 18.3c1.5 0 1.5 1.3 3 1.3s1.5-1.3 3-1.3 1.5 1.3 3 1.3 1.5-1.3 3-1.3 1.5 1.3 3 1.3"/></svg>`,
+    // Zona de aterrizaje (LZ): plataforma circular con la marca en el centro
+    landingZone: `<svg class="landing-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.8"/><path d="M8.8 15.2 16 8"/><path d="M9.6 9.4l4.4 4.6"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>`,
+    // Desechable: flecha de reciclaje tachada (no reutilizable)
+    expendable: `<svg class="landing-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 8.2 5.4 11.8l4.1.1"/><path d="M6.2 10.4A6.4 6.4 0 0 1 12 5.6c1.9 0 3.6.8 4.8 2.1"/><path d="M4.5 4.5l15 15"/></svg>`,
+};
+
+function getLandingIcon(landing) {
+    const cls = getLandingClass(landing);
+    if (cls === "landing-lz") return LANDING_ICONS.landingZone;
+    if (cls === "landing-expendable") return LANDING_ICONS.expendable;
+    return LANDING_ICONS.droneship; // OCISLY / JRTI / ASOG y otras barcazas
+}
+
 function getLaunchPadClass(launchPad) {
     if (!launchPad || launchPad === null) return "";
     if (launchPad.includes("SLC-40")) return "launchpad-cape";
@@ -383,7 +400,7 @@ function openModal(booster) {
                 <td>${escapeHtml(m.name)}</td>
                 <td>${formatDate(m.date)}</td>
                 <td><span class="launch-platform ${getLaunchPadClass(m.launchPad)}">${m.launchPad || ""}</span></td>
-                <td><span class="landing-platform ${getLandingClass(m.landing)}">${m.landing || "Desechado"}</span></td>
+                <td><span class="landing-platform ${getLandingClass(m.landing)}">${getLandingIcon(m.landing)}${m.landing || "Desechado"}</span></td>
             </tr>`;
         const renderRows = () => {
             const sorted = [...flightsForSort].sort((a, b) => {

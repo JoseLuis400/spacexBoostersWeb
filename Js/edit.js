@@ -79,6 +79,31 @@ function escapeHtml(value) {
   ));
 }
 
+// --------------------- ICONOS DE ATERRIZAJE ---------------------
+function getLandingClass(landing) {
+  if (!landing || landing === null) return "landing-expendable";
+  if (landing === "Desechado") return "landing-expendable";
+  if (landing.includes("ASOG")) return "landing-asog";
+  if (landing.includes("JRTI")) return "landing-jrti";
+  if (landing.includes("OCISLY")) return "landing-ocisly";
+  if (landing.includes("LZ-")) return "landing-lz";
+  return "";
+}
+
+// Iconos propios (heredan el color del texto vía currentColor)
+const LANDING_ICONS = {
+  droneship: `<svg class="landing-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 6.8h15l-1.15 5a1.15 1.15 0 0 1-1.12.9H6.77a1.15 1.15 0 0 1-1.12-.9L4.5 6.8z"/><path d="M9.1 11.5 15.2 7.2"/><path d="M9.9 8l3.9 3.5"/><path d="M3 15c1.5 0 1.5 1.3 3 1.3s1.5-1.3 3-1.3 1.5 1.3 3 1.3 1.5-1.3 3-1.3 1.5 1.3 3 1.3"/><path d="M3 18.3c1.5 0 1.5 1.3 3 1.3s1.5-1.3 3-1.3 1.5 1.3 3 1.3 1.5-1.3 3-1.3 1.5 1.3 3 1.3"/></svg>`,
+  landingZone: `<svg class="landing-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.8"/><path d="M8.8 15.2 16 8"/><path d="M9.6 9.4l4.4 4.6"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>`,
+  expendable: `<svg class="landing-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 8.2 5.4 11.8l4.1.1"/><path d="M6.2 10.4A6.4 6.4 0 0 1 12 5.6c1.9 0 3.6.8 4.8 2.1"/><path d="M4.5 4.5l15 15"/></svg>`,
+};
+
+function getLandingIcon(landing) {
+  const cls = getLandingClass(landing);
+  if (cls === "landing-lz") return LANDING_ICONS.landingZone;
+  if (cls === "landing-expendable") return LANDING_ICONS.expendable;
+  return LANDING_ICONS.droneship; // OCISLY / JRTI / ASOG y otras barcazas
+}
+
 // Notificación "toast" (reemplaza a alert()); el tipo se deduce del mensaje.
 function showToast(message, type) {
   if (!type) {
@@ -383,7 +408,7 @@ function createMissionItem(mission, index, boosterId) {
             <div class="mission-number" title="Vuelo Nº ${index + 1}">#${index + 1}</div>
             <div class="mission-info">
                 <p><strong>${escapeHtml(mission.name)}</strong> ${programadoBadge}</p>
-                <p>📅 ${formatMissionDate(mission.date)} | 🚀 ${mission.launchPad} | 🛬 ${mission.landing || "Desechado"}</p>
+                <p>📅 ${formatMissionDate(mission.date)} | 🚀 ${mission.launchPad} | ${getLandingIcon(mission.landing)} ${mission.landing || "Desechado"}</p>
             </div>
             <button class="mission-delete" title="Eliminar misión" aria-label="Eliminar misión" onclick="deleteMission('${boosterId}', ${index})">✕</button>
             <button class="mission-edit" title="Editar misión" aria-label="Editar misión" onclick="editMission('${boosterId}', ${index})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></button>

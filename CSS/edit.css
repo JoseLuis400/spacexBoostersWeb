@@ -1445,6 +1445,12 @@ span.block {
   font-size: 0.85rem;
 }
 
+.mission-info .landing-ico {
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+}
+
 .add-mission-btn {
   width: 100%;
   margin-top: 1rem;
