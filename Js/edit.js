@@ -37,6 +37,16 @@ function formatUpdatedAt(date) {
   return `${d}, ${t} ${tz}`;
 }
 
+// Fecha de misión AAAA-MM-DD -> DD/MM/AAAA (respeta fechas flexibles como "NET 2025")
+function formatMissionDate(dateString) {
+  if (!dateString) return "Sin fecha";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    const [y, m, d] = dateString.split("-");
+    return `${d}/${m}/${y}`;
+  }
+  return dateString;
+}
+
 async function getImageURL(path) {
   try {
     if (!path) return null;
@@ -273,7 +283,7 @@ function createBoosterCard(booster) {
           ` : ''}
         </div>
         <div id="missions-${booster.id}" style="max-height: 400px; overflow-y: auto; padding-right: 0.5rem;">
-          ${booster.missions.map((mission, index) => createMissionItem(mission, index, booster.id)).join("")}
+          ${booster.missions.map((mission, index) => createMissionItem(mission, index, booster.id)).reverse().join("")}
         </div>
         <button class="btn add-mission-btn" onclick="addMission('${booster.id}')">+ Agregar Misión</button>
       </div>
@@ -297,7 +307,7 @@ function createMissionItem(mission, index, boosterId) {
         <div class="mission-item">
             <div class="mission-info">
                 <p><strong>${mission.name}</strong> ${programadoBadge} ${inFlightBadge}</p>
-                <p>📅 ${mission.date} | 🚀 ${mission.launchPad} | 🛬 ${mission.landing || "Desechado"}</p>
+                <p>📅 ${formatMissionDate(mission.date)} | 🚀 ${mission.launchPad} | 🛬 ${mission.landing || "Desechado"}</p>
             </div>
             <div class="mission-actions">
                 <button class="btn btn-edit" onclick="editMission('${boosterId}', ${index})">✏️</button>
