@@ -424,8 +424,22 @@ async function generateHorizontalInfographic(booster) {
     ctx.fillStyle = bgGlow;
     ctx.fillRect(0, 0, W, H);
 
+    // Marca de agua (logo del canal), grande y muy transparente detrás del texto
+    const photoX = 800;
+    const watermark = await loadImageSafe("img/logo-le-blanco-png.png");
+    if (watermark) {
+        ctx.save();
+        ctx.globalAlpha = 0.08;
+        const wmH = 520;
+        const wmW = wmH * (watermark.width / watermark.height);
+        const wmX = (photoX - wmW) / 2;
+        const wmY = (H - wmH) / 2;
+        ctx.drawImage(watermark, wmX, wmY, wmW, wmH);
+        ctx.restore();
+    }
+
     // Panel de imagen (derecha)
-    const photoX = 800, photoW = W - photoX;
+    const photoW = W - photoX;
     const img = await loadImageSafe(booster.image);
     if (img) {
         const scale = Math.max(photoW / img.width, H / img.height);
