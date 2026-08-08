@@ -132,14 +132,15 @@ function getCurrentUTC() {
 }
 
 async function uploadFile(file, storagePath, progressEl) {
-  const uploadTask = uploadBytesResumable(ref(storage, storagePath), file);
+  const storageRef = ref(storage, storagePath);
+  const uploadTask = uploadBytesResumable(storageRef, file);
   if (progressEl) progressEl.style.display = "block";
   uploadTask.on("state_changed", snap => {
     if (progressEl) progressEl.value = (snap.bytesTransferred / snap.totalBytes) * 100;
   });
   await uploadTask;
   if (progressEl) progressEl.style.display = "none";
-  return storagePath;
+  return await getDownloadURL(storageRef);
 }
 
 const TYPE_LABELS = { crew: "Crew Dragon", cargo_v2: "Cargo Dragon 2", cargo_v1: "Cargo Dragon 1" };

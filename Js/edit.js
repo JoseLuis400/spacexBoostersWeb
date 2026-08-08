@@ -485,15 +485,15 @@ document.getElementById("boosterForm").addEventListener("submit", async (e) => {
           showToast("Error al subir la imagen");
           progressBar.style.display = "none";
         },
-        async () => {
-          imagePath = `img/${boosterId}.${extension}`;
-          console.log(`✅ Imagen subida correctamente a ${storagePath}`);
+        () => {
           progressBar.style.display = "none";
         }
       );
-    
+
       await uploadTask;
-    }    
+      imagePath = await getDownloadURL(storageRef);
+      console.log(`✅ Imagen subida correctamente a ${storagePath}`);
+    }
 
     const boosterData = {
       name: document.getElementById("boosterName").value,

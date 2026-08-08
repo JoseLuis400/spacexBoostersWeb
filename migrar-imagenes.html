@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Migrar imágenes - SpaceX Boosters</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="shortcut icon" href="img/icon.png" type="image/x-icon">
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #0b0e14;
+      color: #e6e9ef;
+      font-family: "Source Sans Pro", Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .panel {
+      width: 100%;
+      max-width: 640px;
+      background: #131722;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 2rem;
+    }
+    h1 { margin-top: 0; font-size: 1.4rem; }
+    p.subtitle { color: rgba(255,255,255,0.55); margin-top: -0.5rem; }
+
+    #loginSection { display: none; }
+    #loginSection input {
+      width: 100%;
+      padding: 0.7rem;
+      margin-bottom: 0.75rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: #0b0e14;
+      color: #fff;
+    }
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      padding: 0.7rem 1.2rem;
+      font-weight: 600;
+      background: #00d9ff;
+      color: #06131a;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    #adminSection { display: none; }
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    #runStatus { font-weight: 600; margin-bottom: 0.75rem; }
+    #log {
+      background: #05070c;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 1rem;
+      height: 320px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      font-family: "Consolas", monospace;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+    .footer-note {
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.4);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="panel">
+    <h1>Migrar imágenes a Firebase</h1>
+    <p class="subtitle">Reemplaza rutas locales/Storage por la URL completa de descarga.</p>
+
+    <div id="loginSection">
+      <input type="email" id="loginEmail" placeholder="Email">
+      <input type="password" id="loginPassword" placeholder="Contraseña">
+      <button id="loginBtn">Iniciar sesión</button>
+    </div>
+
+    <div id="adminSection">
+      <div class="admin-header">
+        <span>Conectado como: <strong id="userEmail">--</strong></span>
+        <div>
+          <button id="rerunBtn">Ejecutar de nuevo</button>
+          <button id="logoutBtn">Cerrar sesión</button>
+        </div>
+      </div>
+
+      <div id="runStatus">Esperando...</div>
+      <div id="log"></div>
+      <p class="footer-note">La migración se ejecuta automáticamente al iniciar sesión. Solo actualiza los documentos que aún tengan rutas locales/Storage; los que ya tienen URL completa se dejan intactos.</p>
+    </div>
+  </div>
+
+  <script type="module" src="Js/migrate.js"></script>
+</body>
+</html>

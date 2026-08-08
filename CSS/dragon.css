@@ -1255,3 +1255,17 @@ ul.crew {
   color: rgba(255, 255, 255, 0.75) !important;
   background: rgba(255, 255, 255, 0.05) !important;
 }
+
+.site-nav-clock {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .site-nav-clock {
+    display: none;
+  }
+}

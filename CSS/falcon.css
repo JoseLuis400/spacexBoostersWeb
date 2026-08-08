@@ -470,6 +470,145 @@ body {
   text-wrap: nowrap;
 }
 
+.booster-turnaround {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  font-size: 0.8rem;
+}
+
+.turnaround-stat {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--muted);
+  border-radius: var(--border-radius-medium);
+}
+
+.turnaround-stat .turnaround-label {
+  color: var(--muted-foreground);
+}
+
+.turnaround-stat.fastest strong {
+  color: var(--booster-state-active);
+}
+
+.turnaround-stat.slowest strong {
+  color: var(--destructive);
+}
+
+.turnaround-breakdown {
+  width: 100%;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.turnaround-breakdown-col {
+  flex: 1;
+  min-width: 220px;
+  background: var(--muted);
+  border-radius: var(--radius);
+  border: 2px solid rgba(200 200 200 / 10%);
+  padding: 1rem;
+}
+
+.turnaround-breakdown-col h4 {
+  font-size: 0.9rem;
+  color: var(--muted-foreground);
+  margin-bottom: 0.6rem;
+}
+
+.turnaround-breakdown-col ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.turnaround-breakdown-col li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.turnaround-breakdown-col li strong {
+  color: var(--accent);
+}
+
+.infographic-download {
+  position: relative;
+  align-self: flex-start;
+}
+
+.btn-infographic {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.6rem 1.2rem;
+  border: 2px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  border-radius: var(--border-radius-medium);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-infographic:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.btn-infographic:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.infographic-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 220px;
+  background: var(--card);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius-medium);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  padding: 6px;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 20;
+}
+
+.infographic-menu.open {
+  display: flex;
+}
+
+.infographic-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 0.8rem;
+  border: none;
+  background: none;
+  color: var(--foreground);
+  border-radius: var(--border-radius-small);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.infographic-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--accent);
+}
+
 /* Modal */
 .modal {
   display: none;
@@ -1057,4 +1196,18 @@ body {
   border-color: rgba(255, 255, 255, 0.25);
   color: rgba(255, 255, 255, 0.75) !important;
   background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.site-nav-clock {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .site-nav-clock {
+    display: none;
+  }
 }

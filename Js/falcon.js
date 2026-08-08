@@ -132,6 +132,35 @@ function getMissionRowId(mission) {
     return "mission-unknown";
 }
 
+function daysBetween(dateA, dateB) {
+    return Math.ceil((dateA - dateB) / (1000 * 60 * 60 * 24));
+}
+
+function getTurnaroundExtremes(completedMissions) {
+    if (completedMissions.length < 2) return { min: null, max: null };
+    const dates = completedMissions.map(m => new Date(m.date).getTime());
+    const gaps = [];
+    for (let i = 1; i < dates.length; i++) gaps.push(daysBetween(dates[i], dates[i - 1]));
+    return { min: Math.min(...gaps), max: Math.max(...gaps) };
+}
+
+function averageGapsByGroup(completedMissions, keyFn) {
+    const groups = {};
+    completedMissions.forEach(m => {
+        const key = keyFn(m);
+        if (!key) return;
+        (groups[key] ||= []).push(new Date(m.date).getTime());
+    });
+    const result = {};
+    for (const key in groups) {
+        const dates = groups[key].sort((a, b) => a - b);
+        if (dates.length < 2) continue;
+        let totalDays = 0;
+        for (let i = 1; i < dates.length; i++) totalDays += daysBetween(dates[i], dates[i - 1]);
+        result[key] = Math.round(totalDays / (dates.length - 1));
+    }
+    return result;
+}
 
 function getQueryParam(param) {
     const urlParams = new URLSearchParams(window.location.search);
@@ -203,24 +232,33 @@ async function loadBoostersData() {
         // Procesar misiones
         boostersData = boostersData.map(booster => {
             let flights = 0, firstFlight = null, lastFlight = null, averageDaysBetweenFlights = "N/A";
+            let turnaroundMin = null, turnaroundMax = null;
+            let avgByLaunchPad = {}, avgByLanding = {};
             if (booster.missions.length > 0) {
                 const sortedMissions = sortMissionsByDate(booster.missions);
-                const completedMissions = sortedMissions.filter(m => !m.programado);
-                flights = completedMissions.length;
-                if (flights > 0) {
+                const completedMissions = sortedMissions.filter(m => !m.programado && !isFlexibleDate(m.date));
+                flights = sortedMissions.filter(m => !m.programado).length;
+                if (completedMissions.length > 0) {
                     firstFlight = completedMissions[0].date;
                     lastFlight = completedMissions[completedMissions.length - 1].date;
                 }
                 const dates = completedMissions.map(m => new Date(m.date).getTime());
                 if (dates.length >= 2) {
                     let totalDays = 0;
+                    const gaps = [];
                     for (let i = 1; i < dates.length; i++) {
-                        totalDays += Math.ceil((dates[i] - dates[i - 1]) / (1000 * 60 * 60 * 24));
+                        const gap = daysBetween(dates[i], dates[i - 1]);
+                        totalDays += gap;
+                        gaps.push(gap);
                     }
                     averageDaysBetweenFlights = Math.round(totalDays / (dates.length - 1)) + " días";
+                    turnaroundMin = Math.min(...gaps);
+                    turnaroundMax = Math.max(...gaps);
                 }
+                avgByLaunchPad = averageGapsByGroup(completedMissions, m => m.launchPad || null);
+                avgByLanding = averageGapsByGroup(completedMissions, m => (m.landing && m.landing !== "Desechado") ? m.landing : null);
             }
-            return { ...booster, flights, firstFlight, lastFlight, averageDaysBetweenFlights };
+            return { ...booster, flights, firstFlight, lastFlight, averageDaysBetweenFlights, turnaroundMin, turnaroundMax, avgByLaunchPad, avgByLanding };
         });
 
         filteredBoosters = [...boostersData];
@@ -287,6 +325,17 @@ function createBoosterCard(booster) {
             <span class="booster-status ${statusClass}">${statusText}</span>
             <p class="booster-flights">Vuelos realizados: ${booster.flights}</p>
             <p class="booster-first-flight">${lastFlightText}</p>
+            ${booster.turnaroundMin !== null ? `
+            <div class="booster-turnaround">
+                <div class="turnaround-stat fastest">
+                    <span class="turnaround-label">Menor retorno</span>
+                    <strong>${booster.turnaroundMin} días</strong>
+                </div>
+                <div class="turnaround-stat slowest">
+                    <span class="turnaround-label">Mayor retorno</span>
+                    <strong>${booster.turnaroundMax} días</strong>
+                </div>
+            </div>` : ""}
         </div>
     `;
     return card;
@@ -321,6 +370,198 @@ function getBoosterType(type) {
     return key ? map[key] : "Desconocido";
   }  
   
+
+// --------------------- INFOGRAFÍA DESCARGABLE ---------------------
+const STATUS_COLORS = {
+    active: "#16a34a",
+    retired: "#92400e",
+    destroyed: "#ef4444",
+    testing: "#7c3aed",
+    discarded: "#6b7280",
+    unknown: "#94a3b8",
+};
+
+function getStatusColor(status) {
+    return STATUS_COLORS[normalizeStatus(status)] || STATUS_COLORS.unknown;
+}
+
+function drawRoundedRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+}
+
+function loadImageSafe(url) {
+    return new Promise(resolve => {
+        if (!url || url === "placeholder.png") { resolve(null); return; }
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = url;
+    });
+}
+
+async function generateHorizontalInfographic(booster) {
+    if (document.fonts?.ready) await document.fonts.ready;
+
+    const W = 1280, H = 720;
+    const canvas = document.createElement("canvas");
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d");
+
+    // Fondo
+    ctx.fillStyle = "#0b1220";
+    ctx.fillRect(0, 0, W, H);
+    const bgGlow = ctx.createRadialGradient(140, -80, 0, 140, -80, 900);
+    bgGlow.addColorStop(0, "rgba(26,37,64,0.9)");
+    bgGlow.addColorStop(1, "rgba(26,37,64,0)");
+    ctx.fillStyle = bgGlow;
+    ctx.fillRect(0, 0, W, H);
+
+    // Panel de imagen (derecha)
+    const photoX = 800, photoW = W - photoX;
+    const img = await loadImageSafe(booster.image);
+    if (img) {
+        const scale = Math.max(photoW / img.width, H / img.height);
+        const iw = img.width * scale, ih = img.height * scale;
+        const ix = photoX + (photoW - iw) / 2, iy = (H - ih) / 2;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(photoX, 0, photoW, H);
+        ctx.clip();
+        ctx.drawImage(img, ix, iy, iw, ih);
+        ctx.restore();
+
+        const fade = ctx.createLinearGradient(photoX, 0, photoX + 140, 0);
+        fade.addColorStop(0, "#0b1220");
+        fade.addColorStop(1, "rgba(11,18,32,0)");
+        ctx.fillStyle = fade;
+        ctx.fillRect(photoX, 0, 140, H);
+    } else {
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(photoX, 0, photoW, H);
+    }
+
+    const pad = 64;
+    let y = 90;
+
+    // Marca
+    ctx.fillStyle = "rgba(255,255,255,0.5)";
+    ctx.font = "700 22px 'Source Sans Pro', sans-serif";
+    ctx.fillText("SPACEX BOOSTERS", pad, y);
+
+    // Badge de bloque
+    if (typeof booster.block === "string" && booster.block) {
+        const label = `BLOCK ${booster.block}`;
+        ctx.font = "700 18px 'Source Sans Pro', sans-serif";
+        const tw = ctx.measureText(label).width;
+        const bx = photoX - pad - (tw + 28);
+        drawRoundedRect(ctx, bx, y - 26, tw + 28, 34, 8);
+        ctx.fillStyle = "rgba(255,255,255,0.08)";
+        ctx.fill();
+        ctx.fillStyle = "#fff";
+        ctx.fillText(label, bx + 14, y - 2);
+    }
+
+    // Nombre
+    y += 90;
+    ctx.fillStyle = "#f1f5f9";
+    ctx.font = "700 110px 'Playfair Display', serif";
+    ctx.fillText(booster.name, pad, y);
+
+    // Badges tipo / estado
+    y += 50;
+    const typeText = getBoosterType(booster.type);
+    const statusText = traducirEstado(booster.status);
+    let bx = pad;
+    ctx.font = "700 22px 'Source Sans Pro', sans-serif";
+    [[typeText, "#3b82f6"], [statusText, getStatusColor(booster.status)]].forEach(([text, color]) => {
+        const tw = ctx.measureText(text).width;
+        drawRoundedRect(ctx, bx, y, tw + 32, 42, 10);
+        ctx.fillStyle = `${color}22`;
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.fillText(text, bx + 16, y + 29);
+        bx += tw + 48;
+    });
+
+    // Línea divisoria
+    y += 80;
+    ctx.strokeStyle = "rgba(255,255,255,0.1)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(pad, y);
+    ctx.lineTo(photoX - pad, y);
+    ctx.stroke();
+
+    // Grid de estadísticas
+    const stats = [
+        ["Vuelos realizados", String(booster.flights)],
+        ["Primer vuelo", booster.firstFlight ? formatDate(booster.firstFlight) : "N/A"],
+        ["Último vuelo", booster.lastFlight ? formatDate(booster.lastFlight) : "N/A"],
+        ["Promedio entre vuelos", booster.averageDaysBetweenFlights],
+        ["Menor retorno", booster.turnaroundMin !== null ? `${booster.turnaroundMin} días` : "N/A"],
+        ["Mayor retorno", booster.turnaroundMax !== null ? `${booster.turnaroundMax} días` : "N/A"],
+    ];
+
+    const colW = (photoX - pad * 2) / 2;
+    const rowH = 110;
+    y += 50;
+    stats.forEach(([label, value], i) => {
+        const col = i % 2, row = Math.floor(i / 2);
+        const sx = pad + col * colW;
+        const sy = y + row * rowH;
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "600 20px 'Source Sans Pro', sans-serif";
+        ctx.fillText(label.toUpperCase(), sx, sy);
+        ctx.fillStyle = "#f1f5f9";
+        ctx.font = "700 42px 'Source Sans Pro', sans-serif";
+        ctx.fillText(value, sx, sy + 44);
+    });
+
+    // Pie
+    ctx.fillStyle = "rgba(255,255,255,0.4)";
+    ctx.font = "600 18px 'Source Sans Pro', sans-serif";
+    ctx.fillText("spacexboosters.netlify.app  ·  @LanzamientosE", pad, H - 40);
+
+    return canvas;
+}
+
+async function downloadInfographic(booster, format) {
+    const btn = document.getElementById("infographicToggle");
+    const originalText = btn ? btn.textContent : "";
+    if (btn) { btn.disabled = true; btn.textContent = "Generando…"; }
+    try {
+        let canvas;
+        if (format === "horizontal") {
+            canvas = await generateHorizontalInfographic(booster);
+        } else {
+            return;
+        }
+        canvas.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${booster.name}-infografia.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }, "image/png");
+    } catch (error) {
+        console.error("Error generando infografía:", error);
+        alert("No se pudo generar la infografía.");
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = originalText; }
+    }
+}
 
 // --------------------- MODAL ---------------------
 function openModal(booster) {
@@ -363,6 +604,29 @@ function openModal(booster) {
         descripcion = ``
     }
 
+    const launchPadEntries = Object.entries(booster.avgByLaunchPad || {});
+    const landingEntries = Object.entries(booster.avgByLanding || {});
+    let turnaroundBreakdownHTML = "";
+    if (launchPadEntries.length > 0 || landingEntries.length > 0) {
+        turnaroundBreakdownHTML = `
+        <div class="turnaround-breakdown">
+            ${launchPadEntries.length > 0 ? `
+            <div class="turnaround-breakdown-col">
+                <h4>Promedio entre vuelos por plataforma</h4>
+                <ul>
+                    ${launchPadEntries.map(([pad, avg]) => `<li><span>${escapeHtml(pad)}</span><strong>${avg} días</strong></li>`).join("")}
+                </ul>
+            </div>` : ""}
+            ${landingEntries.length > 0 ? `
+            <div class="turnaround-breakdown-col">
+                <h4>Promedio entre vuelos por zona de aterrizaje</h4>
+                <ul>
+                    ${landingEntries.map(([zone, avg]) => `<li><span>${escapeHtml(zone)}</span><strong>${avg} días</strong></li>`).join("")}
+                </ul>
+            </div>` : ""}
+        </div>`;
+    }
+
     modalBody.innerHTML = `
         <div class="modal-header">
             <img src="${booster.image}" alt="${escapeHtml(booster.name)}" class="modal-image" loading="lazy"
@@ -373,6 +637,12 @@ function openModal(booster) {
             <span class="booster-type ${typeClass}">${typeText}</span>
             <span class="booster-status ${statusClass}">${statusText}</span>
         </div>
+        <div class="infographic-download">
+            <button type="button" class="btn-infographic" id="infographicToggle">🖼️ Descargar infografía ▾</button>
+            <div class="infographic-menu" id="infographicMenu">
+                <button type="button" class="infographic-option" data-format="horizontal">Horizontal · PNG (16:9)</button>
+            </div>
+        </div>
         ${descripcion}
         <div class="booster-dates">
             <div class="booster-date"><div style="color: var(--muted-foreground);">Primer Vuelo</div><h3>${booster.firstFlight?formatDate(booster.firstFlight):"N/A"}</h3></div>
@@ -380,6 +650,7 @@ function openModal(booster) {
             ${booster.missions.length>=2?`<div class="booster-date"><div style="color: var(--muted-foreground);">Entre vuelos</div><h3>${booster.averageDaysBetweenFlights}</h3></div>`:""}
             <div class="booster-date"><div style="color: var(--muted-foreground);">Último Vuelo</div><h3>${booster.lastFlight?formatDate(booster.lastFlight):"N/A"}</h3></div>
         </div>
+        ${turnaroundBreakdownHTML}
         ${flightHistoryHTML}
     `;
 
@@ -434,6 +705,19 @@ function openModal(booster) {
         renderRows();
     }
 
+    const infoToggle = document.getElementById("infographicToggle");
+    const infoMenu = document.getElementById("infographicMenu");
+    infoToggle?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        infoMenu.classList.toggle("open");
+    });
+    infoMenu?.querySelectorAll("[data-format]").forEach(opt => {
+        opt.addEventListener("click", () => {
+            infoMenu.classList.remove("open");
+            downloadInfographic(booster, opt.dataset.format);
+        });
+    });
+
     modal.style.display = "block";
     document.body.classList.add("modal-open");
 
@@ -471,6 +755,7 @@ function setupEventListeners() {
     modalClose.addEventListener("click", closeModal);
     modal.addEventListener("click", e => { if (e.target === modal) closeModal(); });
     document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+    document.addEventListener("click", () => document.getElementById("infographicMenu")?.classList.remove("open"));
 }
 
 // --------------------- ESTADÍSTICAS ---------------------
